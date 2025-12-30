@@ -17,18 +17,18 @@
 <body>
     <div class="ui-panel">
         <div class="control-group">
-            <label>1. Select VR Video</label>
+            <label>1. Load Video</label>
             <input type="file" id="fileInput" accept="video/*">
         </div>
         
         <div class="control-group">
-            <label>2. Distance (Radius)</label>
-            <input type="range" id="radiusSlider" min="50" max="1000" step="10" value="400">
+            <label>2. Screen Size (Scale)</label>
+            <input type="range" id="sizeSlider" min="1" max="50" step="1" value="10">
         </div>
 
         <div class="control-group">
-            <label>3. Zoom (FOV)</label>
-            <input type="range" id="zoomSlider" min="20" max="120" step="1" value="50">
+            <label>3. Distance (Z-Axis)</label>
+            <input type="range" id="distSlider" min="-50" max="-2" step="1" value="-15">
         </div>
 
         <button onclick="recenter()">Recenter View</button>
@@ -40,31 +40,54 @@
             <video id="videoAsset" loop crossorigin="anonymous" playsinline muted></video>
         </a-assets>
 
-        <a-entity id="video-world" rotation="0 -90 0">
-            <a-videosphere id="vSphere" src="#videoAsset" phi-length="180" radius="400"></a-videosphere>
+        <a-entity id="video-world">
+            <a-video id="vScreen" 
+                     src="#videoAsset" 
+                     width="16" height="9" 
+                     position="0 1.6 -15">
+            </a-video>
         </a-entity>
 
-        <a-entity id="rig" position="0 1.6 0">
-            <a-camera id="cam" look-controls fov="50"></a-camera>
+        <a-entity id="rig" position="0 0 0">
+            <a-camera id="cam" look-controls></a-camera>
         </a-entity>
     </a-scene>
 
     <script>
         const video = document.getElementById('videoAsset');
-        const vSphere = document.getElementById('vSphere');
+        const vScreen = document.getElementById('vScreen');
         const camera = document.getElementById('cam');
         const world = document.getElementById('video-world');
 
-        // Adjusts the "Distance" from the user
-        document.getElementById('radiusSlider').oninput = (e) => {
-            vSphere.setAttribute('radius', e.target.value);
+        // Adjust Size: Scaled down to be 50% smaller by default
+        document.getElementById('sizeSlider').oninput = (e) => {
+            const s = e.target.value / 10;
+            vScreen.setAttribute('scale', {x: s, y: s, z: s});
         };
 
-        // Adjusts the "Magnification"
-        document.getElementById('zoomSlider').oninput = (e) => {
-            camera.setAttribute('camera', 'fov', e.target.value);
+        // Adjust Distance: Pushing the screen further back
+        document.getElementById('distSlider').oninput = (e) => {
+            const pos = vScreen.getAttribute('position');
+            pos.z = e.target.value;
+            vScreen.setAttribute('position', pos);
         };
 
+        document.getElementById('fileInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                video.src = URL.createObjectURL(file);
+                video.play();
+            }
+        };
+
+        function recenter() {
+            const camRot = camera.getAttribute('rotation');
+            // Align the flat screen to exactly where you are looking
+            world.setAttribute('rotation', { x: 0, y: camRot.y, z: 0 });
+        }
+    </script>
+</body>
+</html>
         document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
