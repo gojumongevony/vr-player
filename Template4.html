@@ -8,58 +8,68 @@
             background: rgba(0,0,0,0.85); color: white; padding: 15px; 
             border-radius: 10px; font-family: sans-serif; width: 220px;
         }
-        .control-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
-        input[type="range"] { width: 100%; cursor: pointer; }
-        button { width: 100%; padding: 8px; margin-top: 5px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
-        .btn-recenter { background: #444; color: white; }
-        .btn-exit { background: #d9534f; color: white; } /* Red color for Exit */
-        button:hover { opacity: 0.8; }
+        button { width: 100%; padding: 8px; margin-top: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; }
+        input[type="range"] { width: 100%; }
+        label { font-size: 11px; color: #bbb; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="ui-panel" id="ui">
-        <div class="control-group">
-            <label>1. Load Video</label>
-            <input type="file" id="fileInput" accept="video/*">
-        </div>
+    <div class="ui-panel">
+        <input type="file" id="fileInput" accept="video/*">
         
-        <div class="control-group">
-            <label>2. Height Adjust</label>
-            <input type="range" id="heightSlider" min="-2" max="5" step="0.1" value="1.6">
-        </div>
-
-        <div class="control-group">
-            <label>3. Zoom (FOV)</label>
-            <input type="range" id="zoomSlider" min="30" max="120" step="1" value="80">
-        </div>
-
-        <button class="btn-recenter" onclick="recenter()">Recenter View</button>
-        <button class="btn-exit" onclick="exitImmersive()">Exit AR/VR Mode</button>
+        <label>Height Adjust</label>
+        <input type="range" id="heightSlider" min="-2" max="5" step="0.1" value="1.6">
+        
+        <button onclick="recenter()">Recenter View</button>
+        <button style="background:#d9534f" onclick="document.getElementById('scene').exitVR()">Exit AR/VR</button>
     </div>
 
-    <a-scene id="mainScene" xr-mode-ui="enabled: true; XRMode: xr;">
+    <a-scene id="scene" xr-mode-ui="enabled: true; XRMode: xr;">
         <a-assets>
             <video id="videoAsset" loop crossorigin="anonymous" playsinline muted></video>
         </a-assets>
 
-        <a-entity id="video-world" rotation="0 90 0">
-            <a-videosphere src="#videoAsset" phi-length="180" radius="100"></a-videosphere>
+        <a-entity id="video-container" rotation="0 -90 0">
+            <a-videosphere 
+                src="#videoAsset" 
+                phi-length="180" 
+                phi-start="0"
+                segments-width="64"
+                segments-height="64">
+            </a-videosphere>
         </a-entity>
 
         <a-entity id="rig" position="0 1.6 0">
-            <a-camera id="cam" look-controls fov="80"></a-camera>
+            <a-camera id="cam" look-controls></a-camera>
         </a-entity>
     </a-scene>
 
     <script>
-        const sceneEl = document.getElementById('mainScene');
         const video = document.getElementById('videoAsset');
         const rig = document.getElementById('rig');
         const camera = document.getElementById('cam');
-        const world = document.getElementById('video-world');
+        const container = document.getElementById('video-container');
 
-        // Exit Immersive Mode Function
+        document.getElementById('fileInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                video.src = URL.createObjectURL(file);
+                video.play();
+            }
+        };
+
+        document.getElementById('heightSlider').oninput = (e) => {
+            rig.setAttribute('position', { x: 0, y: e.target.value, z: 0 });
+        };
+
+        function recenter() {
+            const camRot = camera.getAttribute('rotation');
+            // Offset by -90 to keep the 180-degree center directly in front of the user
+            container.setAttribute('rotation', { x: 0, y: camRot.y - 90, z: 0 });
+        }
+    </script>
+</body>
+</html>
         function exitImmersive() {
             if (sceneEl.is('vr-mode')) {
                 sceneEl.exitVR();
