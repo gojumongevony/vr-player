@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <style>
+      #filePicker { position: absolute; top: 10px; left: 10px; z-index: 9999; }
+    </style>
+  </head>
+  <body>
+    <div id="filePicker">
+      <input type="file" id="fileInput" accept="video/*">
+    </div>
+
+    <a-scene xr-mode-ui="enabled: true; XRMode: xr;">
+      <a-assets>
+        <video id="videoAsset" loop crossorigin="anonymous" playsinline muted></video>
+      </a-assets>
+
+      <a-videosphere src="#videoAsset" phi-length="180" rotation="0 90 0"></a-videosphere>
+
+      <a-camera></a-camera>
+    </a-scene>
+
+    <script>
+      const input = document.getElementById('fileInput');
+      const video = document.getElementById('videoAsset');
+      
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          video.src = URL.createObjectURL(file);
+          video.play();
+          document.getElementById('filePicker').style.display = 'none';
+        }
+      };
+    </script>
+  </body>
+</html>
