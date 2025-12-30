@@ -15,20 +15,20 @@
     </style>
 </head>
 <body>
-    <div class="ui-panel">
+    <div class="ui-panel" id="ui">
         <div class="control-group">
-            <label>Load Video</label>
+            <label>1. Load Video</label>
             <input type="file" id="fileInput" accept="video/*">
         </div>
         
         <div class="control-group">
-            <label>Video Distance (Radius)</label>
-            <input type="range" id="radiusSlider" min="10" max="500" step="10" value="100">
+            <label>2. Distance (Radius)</label>
+            <input type="range" id="radiusSlider" min="50" max="1000" step="10" value="200">
         </div>
 
         <div class="control-group">
-            <label>Zoom (Camera FOV)</label>
-            <input type="range" id="zoomSlider" min="30" max="120" step="1" value="80">
+            <label>3. Zoom (FOV)</label>
+            <input type="range" id="zoomSlider" min="20" max="120" step="1" value="60">
         </div>
 
         <button onclick="recenter()">Recenter View</button>
@@ -41,11 +41,11 @@
         </a-assets>
 
         <a-entity id="video-world" rotation="0 -90 0">
-            <a-videosphere id="vSphere" src="#videoAsset" phi-length="180" radius="100"></a-videosphere>
+            <a-videosphere id="vSphere" src="#videoAsset" phi-length="180" radius="200"></a-videosphere>
         </a-entity>
 
         <a-entity id="rig" position="0 1.6 0">
-            <a-camera id="cam" look-controls fov="80"></a-camera>
+            <a-camera id="cam" look-controls fov="60"></a-camera>
         </a-entity>
     </a-scene>
 
@@ -55,16 +55,31 @@
         const camera = document.getElementById('cam');
         const world = document.getElementById('video-world');
 
-        // Radius Slider: Physically makes the sphere larger or smaller
+        // Radius: Pushes the "curtain" further away
         document.getElementById('radiusSlider').oninput = (e) => {
             vSphere.setAttribute('radius', e.target.value);
         };
 
-        // FOV Slider: "Zoom" effect by changing the camera lens angle
+        // Zoom: Adjusts the magnification
         document.getElementById('zoomSlider').oninput = (e) => {
             camera.setAttribute('camera', 'fov', e.target.value);
         };
 
+        document.getElementById('fileInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                video.src = URL.createObjectURL(file);
+                video.play();
+            }
+        };
+
+        function recenter() {
+            const camRot = camera.getAttribute('rotation');
+            world.setAttribute('rotation', { x: 0, y: camRot.y - 90, z: 0 });
+        }
+    </script>
+</body>
+</html>
         // File Selection Logic
         document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
