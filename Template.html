@@ -144,7 +144,7 @@ button, select {
 <!-- 2D Controls -->
 <div id="controls">
     <div class="control-row">
-        <button id="enter-vr">Enter VR</button>
+        <button id="enter-vr">Enter Full Immersion</button>
         <button id="play-pause">Play</button>
         <button id="mute">Mute</button>
         <button id="recenter">Re-center</button>
@@ -167,7 +167,7 @@ button, select {
     <div id="time-display">00:00 / 00:00</div>
 </div>
 
-<!-- A-Frame Scene - REMOVED cursor="rayOrigin: mouse" -->
+<!-- A-Frame Scene -->
 <a-scene embedded vr-mode-ui="enabled: false" style="width:100vw; height:100vh;">
     <a-assets>
         <video
@@ -181,6 +181,7 @@ button, select {
         </video>
     </a-assets>
 
+    <!-- Classic Videosphere (hidden in immersion) -->
     <a-videosphere
         id="video-sphere"
         src="#vr-video"
@@ -188,11 +189,24 @@ button, select {
         material="shader: flat; side: back">
     </a-videosphere>
 
+    <!-- Floor-Placed Curved Screen (visible only in immersion) -->
+    <a-cylinder
+        id="floor-screen"
+        src="#vr-video"
+        radius="4"
+        height="2.5"
+        theta-length="90"
+        rotation="0 180 0"
+        position="0 1.25 -3"
+        material="shader: flat; side: double"
+        visible="false">
+    </a-cylinder>
+
     <a-entity id="camera" camera look-controls wasd-controls-enabled="false" position="0 1.6 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
     </a-entity>
 
-    <!-- VR Controls Panel -->
+    <!-- VR Controls Panel (same as before) -->
     <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0">
         <a-plane width="1.8" height="1.2" position="0 0 0" color="#222" opacity="0.8" material="side: double"></a-plane>
 
@@ -222,7 +236,6 @@ button, select {
 </a-scene>
 
 <script>
-// All the same JavaScript as before — unchanged
 const startup = document.getElementById('startup');
 const chooseBtn = document.getElementById('choose-btn');
 const fileInput = document.getElementById('file-input');
@@ -247,6 +260,9 @@ const vrControls = document.getElementById('vr-controls');
 const vrPlayText = document.querySelector('#vr-play a-text');
 const vrMuteText = document.querySelector('#vr-mute a-text');
 const vrTimeText = document.getElementById('vr-time');
+
+const videoSphere = document.getElementById('video-sphere');
+const floorScreen = document.getElementById('floor-screen');
 
 let fov = 80;
 let controlsTimeout;
@@ -328,22 +344,35 @@ function showControls() {
 controls.addEventListener('mousemove', showControls);
 controls.addEventListener('touchstart', showControls, {passive: true});
 
-/* ---------- VR Toggle ---------- */
-enterVrBtn.onclick = () => {
-    scene.is('vr-mode') ? scene.exitVR() : scene.enterVR();
+/* ---------- VR Toggle with Floor Screen ---------- */
+enterVrBtn.onclick = async () => {
+    if (scene.is('vr-mode')) {
+        scene.exitVR();
+    } else {
+        // Request local-floor for real floor alignment
+        await scene.enterVR({referenceSpaceType: 'local-floor'});
+    }
 };
 
 scene.addEventListener('enter-vr', () => {
     controls.style.display = 'none';
     vrControls.setAttribute('visible', true);
-    enterVrBtn.textContent = 'Exit VR';
+    enterVrBtn.textContent = 'Exit Immersion';
+
+    // Switch to floor-placed screen
+    videoSphere.setAttribute('visible', false);
+    floorScreen.setAttribute('visible', true);
 });
 
 scene.addEventListener('exit-vr', () => {
     controls.style.display = 'flex';
     showControls();
     vrControls.setAttribute('visible', false);
-    enterVrBtn.textContent = 'Enter VR';
+    enterVrBtn.textContent = 'Enter Full Immersion';
+
+    // Back to classic sphere
+    videoSphere.setAttribute('visible', true);
+    floorScreen.setAttribute('visible', false);
 });
 
 /* ---------- Playback Controls ---------- */
@@ -380,7 +409,7 @@ document.getElementById('vr-play').onclick = togglePlay;
 document.getElementById('vr-mute').onclick = toggleMute;
 document.getElementById('vr-recenter').onclick = recenterView;
 
-/* ---------- Zoom ---------- */
+/* ---------- Zoom (affects both modes) ---------- */
 function updateZoom() {
     document.querySelector('#camera').setAttribute('camera', 'fov', fov);
 }
