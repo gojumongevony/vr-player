@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Local VR Player - Full Immersion with Button</title>
+    <title>Local VR Player - Full Immersion for Samsung Galaxy XR</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
@@ -66,26 +66,8 @@
             gap: 10px;
         }
         #seek-bar { width: 600px; max-width: 90vw; }
-        #button-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        button {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+        button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         button:hover { background: rgba(255,255,255,0.4); }
-        #enter-immersion-btn {
-            background: #ff5722;
-        }
-        #enter-immersion-btn:hover {
-            background: #e64a19;
-        }
     </style>
 </head>
 <body>
@@ -93,7 +75,7 @@
     <!-- Startup screen with video type selection -->
     <div id="startup">
         <h1>Local VR Player</h1>
-        <p>Optimized for Samsung Galaxy XR</p>
+        <p>Optimized for Samsung Galaxy XR - Full Immersion</p>
         <p>Select your video type:</p>
         <div class="mode-group">
             <div id="opt-180" class="mode-option active">180° VR</div>
@@ -104,10 +86,9 @@
         <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg">
     </div>
 
-    <!-- 2D overlay controls -->
+    <!-- 2D overlay controls (visible only outside immersion) -->
     <div id="controls" style="display:none;">
-        <div id="button-row">
-            <button id="enter-immersion-btn">Full Immersion (VR)</button>
+        <div>
             <button id="play-pause">Play</button>
             <button id="mute">Mute</button>
             <button id="zoom-in">Zoom In</button>
@@ -117,7 +98,7 @@
         <div id="time-display">00:00 / 00:00</div>
     </div>
 
-    <a-scene embedded vr-mode-ui="enabled: false">
+    <a-scene embedded vr-mode-ui="enabled: true" style="width:100vw; height:100vh;">
         <a-assets>
             <video id="vr-video" autoplay loop crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
@@ -130,7 +111,7 @@
             </a-entity>
         </a-entity>
 
-        <!-- 3D VR Controls -->
+        <!-- 3D in-scene controls (visible only in immersion mode) -->
         <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0" scale="0.8 0.8 0.8">
             <a-plane id="vr-play-pause" class="clickable" width="0.6" height="0.3" material="color: #333" position="-1.2 0.6 0">
                 <a-text value="Play" align="center" color="white" width="2" position="0 0 0.01"></a-text>
@@ -202,11 +183,6 @@
             }, { once: true });
         });
 
-        // NEW: Custom immersion button click handler
-        enterImmersionBtn.addEventListener('click', () => {
-            scene.enterVR();
-        });
-
         // Controls
         const playPauseBtn = document.getElementById('play-pause');
         const muteBtn = document.getElementById('mute');
@@ -226,6 +202,7 @@
         const minFOV = 30;
         const maxFOV = 120;
 
+        // Full immersion mode handling
         scene.addEventListener('enter-vr', () => {
             domControls.style.display = 'none';
             vrControls.setAttribute('visible', true);
