@@ -6,7 +6,7 @@
     <title>Local VR/AR Player for Samsung Galaxy XR</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: black; }
         #startup {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -29,7 +29,6 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 20px;
         }
         #choose-btn:hover { background: #005fa3; }
 
@@ -48,6 +47,19 @@
         .mode-option.active {
             background: #0078d7;
             border-color: #0078d7;
+        }
+
+        #start-instruction {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            z-index: 50;
+            display: none;
+            pointer-events: none;
         }
 
         #controls {
@@ -72,21 +84,26 @@
 </head>
 <body>
 
-    <!-- Startup screen with video type selection -->
+    <!-- Startup screen -->
     <div id="startup">
         <h1>Local VR/AR Player</h1>
-        <p>Optimized for Samsung Galaxy XR</p>
+        <p>Optimized for Samsung Galaxy XR & Mobile</p>
         <p>Select your video type:</p>
         <div class="mode-group">
             <div id="opt-180" class="mode-option active">180° VR</div>
             <div id="opt-360" class="mode-option">360° VR</div>
         </div>
-        <p>Select a local equirectangular video file (MP4 recommended)</p>
+        <p>Select a local equirectangular video file (MP4)</p>
         <button id="choose-btn">Choose Video File</button>
-        <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg">
+        <input type="file" id="file-input" accept="video/mp4,video/webm">
     </div>
 
-    <!-- 2D overlay controls (for desktop/mobile fallback) -->
+    <!-- Tap to start instruction (for mobile autoplay policy) -->
+    <div id="start-instruction">
+        Tap anywhere on the screen to start the video
+    </div>
+
+    <!-- 2D overlay controls -->
     <div id="controls" style="display:none;">
         <div>
             <button id="play-pause">Play</button>
@@ -98,9 +115,9 @@
         <div id="time-display">00:00 / 00:00</div>
     </div>
 
-    <a-scene embedded vr-mode-ui="enabled: true" webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #controls;">
+    <a-scene embedded vr-mode-ui="enabled: true" webxr="optionalFeatures: dom-overlay; overlayElement: #controls">
         <a-assets>
-            <video id="vr-video" autoplay loop crossorigin="anonymous"></video>
+            <video id="vr-video" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
         <a-videosphere id="video-sphere" src="#vr-video" rotation="0 180 0"></a-videosphere>
@@ -111,7 +128,7 @@
             </a-entity>
         </a-entity>
 
-        <!-- In-scene 3D controls for VR/AR (gaze/hand/eye compatible) -->
+        <!-- 3D in-scene controls -->
         <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0" scale="0.8 0.8 0.8">
             <a-plane id="vr-play-pause" class="clickable" width="0.6" height="0.3" material="color: #333" position="-1.2 0.6 0">
                 <a-text value="Play" align="center" color="white" width="2" position="0 0 0.01"></a-text>
@@ -140,6 +157,7 @@
 
     <script>
         const startup = document.getElementById('startup');
+        const startInstruction = document.getElementById('start-instruction');
         const chooseBtn = document.getElementById('choose-btn');
         const fileInput = document.getElementById('file-input');
         const video = document.getElementById('vr-video');
@@ -151,7 +169,9 @@
         const opt360 = document.getElementById('opt-360');
 
         let is360 = false;
+        let userGestureDone = false;
 
+        // Video type selection
         opt180.addEventListener('click', () => {
             is360 = false;
             opt180.classList.add('active');
@@ -166,6 +186,7 @@
             videoSphere.setAttribute('rotation', '0 0 0');
         });
 
+        // File selection
         chooseBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -176,14 +197,21 @@
 
             startup.style.display = 'none';
             domControls.style.display = 'flex';
+            startInstruction.style.display = 'block';  // Show tap instruction
 
-            video.addEventListener('loadedmetadata', () => {
-                video.play();
-                updatePlayPauseUI(true);
-            }, { once: true });
+            // Wait for user tap to start video (bypasses mobile autoplay block)
+            const startVideo = () => {
+                if (userGestureDone) return;
+                userGestureDone = true;
+                startInstruction.style.display = 'none';
+                video.play().catch(err => console.error("Play error:", err));
+            };
+
+            document.body.addEventListener('touchstart', startVideo, { once: true });
+            document.body.addEventListener('click', startVideo, { once: true });
         });
 
-        // Controls logic (same as before, with Galaxy XR optimizations)
+        // Rest of controls (play/pause, mute, zoom, seek, etc.)
         const playPauseBtn = document.getElementById('play-pause');
         const muteBtn = document.getElementById('mute');
         const seekBar = document.getElementById('seek-bar');
@@ -212,19 +240,72 @@
             vrControls.setAttribute('visible', false);
         });
 
-        // ... (rest of control functions unchanged from previous version)
-
-        function togglePlayPause() { /* same */ }
-        // Include all previous functions for play/pause, mute, zoom, seek, etc.
-
-        // Mouse wheel zoom fallback
-        window.addEventListener('wheel', (e) => {
-            if (!scene.is('vr-mode') && !scene.is('ar-mode')) {
-                currentFOV += e.deltaY > 0 ? 10 : -10;
-                currentFOV = Math.max(minFOV, Math.min(maxFOV, currentFOV));
-                camera.setAttribute('camera', 'fov', currentFOV);
+        function togglePlayPause() {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
             }
+            updatePlayPauseUI(!video.paused);
+        }
+
+        function updatePlayPauseUI(playing) {
+            const text = playing ? 'Pause' : 'Play';
+            playPauseBtn.textContent = text;
+            vrPlayPauseText.setAttribute('value', text);
+        }
+
+        function toggleMute() {
+            video.muted = !video.muted;
+            const text = video.muted ? 'Unmute' : 'Mute';
+            muteBtn.textContent = text;
+            vrMuteText.setAttribute('value', text);
+        }
+
+        function zoomIn() {
+            currentFOV = Math.max(minFOV, currentFOV - 10);
+            camera.setAttribute('camera', 'fov', currentFOV);
+        }
+
+        function zoomOut() {
+            currentFOV = Math.min(maxFOV, currentFOV + 10);
+            camera.setAttribute('camera', 'fov', currentFOV);
+        }
+
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        muteBtn.addEventListener('click', toggleMute);
+        zoomInBtn.addEventListener('click', zoomIn);
+        zoomOutBtn.addEventListener('click', zoomOut);
+
+        document.querySelector('#vr-play-pause').addEventListener('click', togglePlayPause);
+        document.querySelector('#vr-mute').addEventListener('click', toggleMute);
+        document.querySelector('#vr-zoom-in').addEventListener('click', zoomIn);
+        document.querySelector('#vr-zoom-out').addEventListener('click', zoomOut);
+        document.querySelector('#vr-rewind').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); });
+        document.querySelector('#vr-forward').addEventListener('click', () => { video.currentTime += 10; });
+
+        seekBar.addEventListener('input', () => {
+            video.currentTime = (seekBar.value / 100) * video.duration;
         });
+
+        video.addEventListener('timeupdate', () => {
+            const progress = (video.currentTime / video.duration) || 0;
+            seekBar.value = progress * 100;
+            const timeStr = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+            timeDisplay.textContent = timeStr;
+            vrTimeDisplay.setAttribute('value', timeStr);
+
+            vrProgress.setAttribute('width', progress * 2.5);
+            vrProgress.object3D.position.x = (progress * 2.5) / 2 - 1.25;
+            updatePlayPauseUI(!video.paused);
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
     </script>
 </body>
 </html>
