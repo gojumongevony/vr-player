@@ -7,6 +7,9 @@
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
+<!-- Required for hand tracking in A-Frame 1.6.0 -->
+<script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+
 <style>
 body {
     margin: 0;
@@ -84,6 +87,17 @@ button {
     border-radius: 5px;
     cursor: pointer;
 }
+
+#immersion-btn {
+    padding: 16px 32px;
+    font-size: 20px;
+    background: orange;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 20px;
+}
 </style>
 </head>
 
@@ -100,12 +114,14 @@ button {
 
     <button id="choose-btn">Choose Video File</button>
     <input id="file-input" type="file" accept="video/mp4,video/webm,video/ogg" hidden>
+
+    <button id="immersion-btn" style="display:none;">Enter Full Immersion</button>
 </div>
 
 <!-- ---------- 2D Controls ---------- -->
 <div id="controls">
     <div>
-        <button id="enter-vr">Enter VR</button>
+        <button id="enter-vr">Enter VR (Legacy)</button>
         <button id="play-pause">Play</button>
         <button id="mute">Mute</button>
         <button id="zoom-in">Zoom In</button>
@@ -116,9 +132,8 @@ button {
 </div>
 
 <!-- ---------- A-Frame Scene ---------- -->
-<a-scene embedded vr-mode-ui="enabled: false" style="width:100vw; height:100vh;">
+<a-scene embedded xr-mode-ui="enabled: true" style="width:100vw; height:100vh;">
     <a-assets>
-        <!-- CRITICAL FIX: mobile-safe video attributes -->
         <video
             id="vr-video"
             autoplay
@@ -137,32 +152,45 @@ button {
         material="shader: flat; side: back">
     </a-videosphere>
 
-    <a-entity id="camera" camera look-controls position="0 1.6 0">
-        <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
-    </a-entity>
+    <!-- Left Hand with Hand Tracking -->
+    <a-entity id="left-hand"
+              hand-tracking-controls="hand: left; model: true; modelStyle: lowpoly; modelColor: #ffcccc"
+              laser-controls="hand: left"
+              raycaster="objects: .clickable"
+              cursor="fuse: false"></a-entity>
 
-    <!-- ---------- VR Controls ---------- -->
+    <!-- Right Hand with Hand Tracking -->
+    <a-entity id="right-hand"
+              hand-tracking-controls="hand: right; model: true; modelStyle: lowpoly; modelColor: #ccccff"
+              laser-controls="hand: right"
+              raycaster="objects: .clickable"
+              cursor="fuse: false"></a-entity>
+
+    <!-- VR Controls HUD - Clickable with raycaster -->
     <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0">
-        <a-plane id="vr-play" width="0.6" height="0.3" position="-0.8 0.4 0" color="#333">
+        <a-plane id="vr-play" class="clickable" width="0.6" height="0.3" position="-0.8 0.4 0" color="#333" event-set__mouseenter="_event: mouseenter; material.color: #555" event-set__mouseleave="_event: mouseleave; material.color: #333">
             <a-text value="Play" align="center" color="white" position="0 0 0.01"></a-text>
         </a-plane>
 
-        <a-plane id="vr-mute" width="0.6" height="0.3" position="0 0.4 0" color="#333">
+        <a-plane id="vr-mute" class="clickable" width="0.6" height="0.3" position="0 0.4 0" color="#333" event-set__mouseenter="_event: mouseenter; material.color: #555" event-set__mouseleave="_event: mouseleave; material.color: #333">
             <a-text value="Mute" align="center" color="white" position="0 0 0.01"></a-text>
         </a-plane>
 
-        <a-plane id="vr-zoom-in" width="0.6" height="0.3" position="0.8 0.4 0" color="#333">
+        <a-plane id="vr-zoom-in" class="clickable" width="0.6" height="0.3" position="0.8 0.4 0" color="#333" event-set__mouseenter="_event: mouseenter; material.color: #555" event-set__mouseleave="_event: mouseleave; material.color: #333">
             <a-text value="Zoom +" align="center" color="white" position="0 0 0.01"></a-text>
         </a-plane>
 
         <a-text id="vr-time" value="00:00 / 00:00" align="center" color="white" position="0 -0.2 0"></a-text>
     </a-entity>
+
+    <a-entity id="camera" camera look-controls position="0 1.6 0"></a-entity>
 </a-scene>
 
 <script>
 const startup = document.getElementById('startup');
 const chooseBtn = document.getElementById('choose-btn');
 const fileInput = document.getElementById('file-input');
+const immersionBtn = document.getElementById('immersion-btn');
 const video = document.getElementById('vr-video');
 const scene = document.querySelector('a-scene');
 const controls = document.getElementById('controls');
@@ -177,8 +205,11 @@ const zoomOutBtn = document.getElementById('zoom-out');
 const camera = document.getElementById('camera');
 
 const vrControls = document.getElementById('vr-controls');
-const vrPlayText = document.querySelector('#vr-play a-text');
-const vrMuteText = document.querySelector('#vr-mute a-text');
+const vrPlay = document.getElementById('vr-play');
+const vrMute = document.getElementById('vr-mute');
+const vrZoomIn = document.getElementById('vr-zoom-in');
+const vrPlayText = vrPlay.querySelector('a-text');
+const vrMuteText = vrMute.querySelector('a-text');
 const vrTimeText = document.getElementById('vr-time');
 
 let fov = 80;
@@ -212,6 +243,7 @@ fileInput.onchange = e => {
 
     startup.style.display = 'none';
     controls.style.display = 'flex';
+    immersionBtn.style.display = 'block'; // Show immersion button after file load
 
     video.onloadeddata = () => {
         video.muted = true;
@@ -219,7 +251,16 @@ fileInput.onchange = e => {
     };
 };
 
-/* ---------- VR Toggle ---------- */
+/* ---------- Immersion Button for Galaxy XR ---------- */
+immersionBtn.onclick = async () => {
+    if (scene.is('vr-mode')) return;
+    const session = await navigator.xr.requestSession('immersive-vr', {
+        optionalFeatures: ['hand-tracking']
+    });
+    scene.enterVR(session);
+};
+
+/* ---------- Legacy VR Toggle (for compatibility) ---------- */
 enterVrBtn.onclick = () => {
     scene.is('vr-mode') ? scene.exitVR() : scene.enterVR();
 };
@@ -228,15 +269,17 @@ scene.addEventListener('enter-vr', () => {
     controls.style.display = 'none';
     vrControls.setAttribute('visible', true);
     enterVrBtn.textContent = 'Exit VR';
+    immersionBtn.style.display = 'none';
 });
 
 scene.addEventListener('exit-vr', () => {
     controls.style.display = 'flex';
     vrControls.setAttribute('visible', false);
     enterVrBtn.textContent = 'Enter VR';
+    immersionBtn.style.display = 'block';
 });
 
-/* ---------- Playback ---------- */
+/* ---------- Playback Functions ---------- */
 function togglePlay() {
     video.paused ? video.play() : video.pause();
     const label = video.paused ? 'Play' : 'Pause';
@@ -251,23 +294,22 @@ function toggleMute() {
     vrMuteText.setAttribute('value', label);
 }
 
+/* ---------- Click Events (2D + Hand Raycaster in VR) ---------- */
 playPauseBtn.onclick = togglePlay;
 muteBtn.onclick = toggleMute;
-document.getElementById('vr-play').onclick = togglePlay;
-document.getElementById('vr-mute').onclick = toggleMute;
-
-/* ---------- Zoom ---------- */
-zoomInBtn.onclick = () => {
+vrPlay.onclick = togglePlay;
+vrMute.onclick = toggleMute;
+vrZoomIn.onclick = () => {
     fov = Math.max(30, fov - 10);
     camera.setAttribute('camera', 'fov', fov);
 };
 
+/* ---------- Desktop Zoom Buttons ---------- */
+zoomInBtn.onclick = vrZoomIn.onclick;
 zoomOutBtn.onclick = () => {
     fov = Math.min(120, fov + 10);
     camera.setAttribute('camera', 'fov', fov);
 };
-
-document.getElementById('vr-zoom-in').onclick = zoomInBtn.onclick;
 
 /* ---------- Progress ---------- */
 video.ontimeupdate = () => {
