@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Local VR Player - Stable with Immersion Button</title>
+    <title>Local VR Player - Full Immersion with Button</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
@@ -65,12 +65,12 @@
             align-items: center;
             gap: 10px;
         }
+        #seek-bar { width: 600px; max-width: 90vw; }
         #button-row {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        #seek-bar { width: 600px; max-width: 90vw; }
         button {
             background: rgba(255,255,255,0.2);
             border: none;
@@ -159,7 +159,6 @@
 
     <script>
         const startup = document.getElementById('startup');
-        const enterImmersionBtn = document.getElementById('enter-immersion-btn');
         const chooseBtn = document.getElementById('choose-btn');
         const fileInput = document.getElementById('file-input');
         const video = document.getElementById('vr-video');
@@ -203,6 +202,7 @@
             }, { once: true });
         });
 
+        // NEW: Custom immersion button click handler
         enterImmersionBtn.addEventListener('click', () => {
             scene.enterVR();
         });
