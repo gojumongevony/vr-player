@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>2 Local VR Player - Full Immersion</title>
+<title>Local VR Player - Full Immersion</title>
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
@@ -129,14 +129,15 @@ button {
         </video>
     </a-assets>
 
-    <!-- theta-length will be set dynamically: 180 for 180° mode, 360 for 360° mode -->
-    <a-videosphere
+    <!-- Using a-sphere for proper 180° dome (no back side) -->
+    <a-sphere
         id="video-sphere"
         src="#vr-video"
         rotation="0 180 0"
         theta-length="180"
-        material="shader: flat; side: back">
-    </a-videosphere>
+        scale="-1 1 1"
+        material="shader: flat; side: double">
+    </a-sphere>
 
     <a-entity id="camera" camera look-controls position="0 1.6 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
@@ -182,9 +183,9 @@ const vrPlayText = document.querySelector('#vr-play a-text');
 const vrMuteText = document.querySelector('#vr-mute a-text');
 const vrTimeText = document.getElementById('vr-time');
 
-let fov = 80;  // Reverted to original
+let fov = 80;
 
-/* ---------- Mode Selection - Now controls theta-length ---------- */
+/* ---------- Mode Selection ---------- */
 const opt180 = document.getElementById('opt-180');
 const opt360 = document.getElementById('opt-360');
 const sphere = document.getElementById('video-sphere');
@@ -193,14 +194,16 @@ opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     sphere.setAttribute('rotation', '0 180 0');
-    sphere.setAttribute('theta-length', '180');  // Front dome only
+    sphere.setAttribute('theta-length', '180');
+    sphere.setAttribute('scale', '-1 1 1');  // Flip for inside view
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
     sphere.setAttribute('rotation', '0 0 0');
-    sphere.setAttribute('theta-length', '360');  // Full sphere
+    sphere.setAttribute('theta-length', '360');
+    sphere.setAttribute('scale', '1 1 1');  // No flip for full sphere
 };
 
 /* ---------- File Load ---------- */
@@ -259,7 +262,7 @@ muteBtn.onclick = toggleMute;
 document.getElementById('vr-play').onclick = togglePlay;
 document.getElementById('vr-mute').onclick = toggleMute;
 
-/* ---------- Zoom - Original limits restored ---------- */
+/* ---------- Zoom ---------- */
 zoomInBtn.onclick = () => {
     fov = Math.max(30, fov - 10);
     camera.setAttribute('camera', 'fov', fov);
