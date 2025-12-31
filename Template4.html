@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Local VR/AR Player for Samsung Galaxy XR</title>
+    <title>Local VR/AR Player - Fixed Video Texture</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: black; }
@@ -87,7 +87,7 @@
     <!-- Startup screen -->
     <div id="startup">
         <h1>Local VR/AR Player</h1>
-        <p>Optimized for Samsung Galaxy XR & Mobile</p>
+        <p>Optimized for Mobile & XR Headsets</p>
         <p>Select your video type:</p>
         <div class="mode-group">
             <div id="opt-180" class="mode-option active">180° VR</div>
@@ -98,7 +98,7 @@
         <input type="file" id="file-input" accept="video/mp4,video/webm">
     </div>
 
-    <!-- Tap to start instruction (for mobile autoplay policy) -->
+    <!-- Tap to start instruction -->
     <div id="start-instruction">
         Tap anywhere on the screen to start the video
     </div>
@@ -117,7 +117,7 @@
 
     <a-scene embedded vr-mode-ui="enabled: true" webxr="optionalFeatures: dom-overlay; overlayElement: #controls">
         <a-assets>
-            <video id="vr-video" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
+            <video id="vr-video" loop crossorigin="anonymous" playsinline webkit-playsinline muted></video>
         </a-assets>
 
         <a-videosphere id="video-sphere" src="#vr-video" rotation="0 180 0"></a-videosphere>
@@ -134,7 +134,7 @@
                 <a-text value="Play" align="center" color="white" width="2" position="0 0 0.01"></a-text>
             </a-plane>
             <a-plane id="vr-mute" class="clickable" width="0.6" height="0.3" material="color: #333" position="-0.4 0.6 0">
-                <a-text value="Mute" align="center" color="white" width="2" position="0 0 0.01"></a-text>
+                <a-text value="Unmute" align="center" color="white" width="2" position="0 0 0.01"></a-text>
             </a-plane>
             <a-plane id="vr-zoom-in" class="clickable" width="0.6" height="0.3" material="color: #333" position="0.4 0.6 0">
                 <a-text value="Zoom In" align="center" color="white" width="2" position="0 0 0.01"></a-text>
@@ -197,21 +197,30 @@
 
             startup.style.display = 'none';
             domControls.style.display = 'flex';
-            startInstruction.style.display = 'block';  // Show tap instruction
+            startInstruction.style.display = 'block';
 
-            // Wait for user tap to start video (bypasses mobile autoplay block)
+            // Critical fix: Force texture update after play
             const startVideo = () => {
                 if (userGestureDone) return;
                 userGestureDone = true;
                 startInstruction.style.display = 'none';
-                video.play().catch(err => console.error("Play error:", err));
+
+                video.muted = true; // Required for reliable autoplay on mobile
+                video.play().then(() => {
+                    // Force material refresh - this fixes black texture on iOS/Android
+                    const material = videoSphere.getObject3D('mesh').material;
+                    if (material && material.map) {
+                        material.map.needsUpdate = true;
+                        material.needsUpdate = true;
+                    }
+                }).catch(err => console.error("Play error:", err));
             };
 
             document.body.addEventListener('touchstart', startVideo, { once: true });
             document.body.addEventListener('click', startVideo, { once: true });
         });
 
-        // Rest of controls (play/pause, mute, zoom, seek, etc.)
+        // Controls (unchanged except mute starts as muted)
         const playPauseBtn = document.getElementById('play-pause');
         const muteBtn = document.getElementById('mute');
         const seekBar = document.getElementById('seek-bar');
@@ -262,25 +271,28 @@
             vrMuteText.setAttribute('value', text);
         }
 
-        function zoomIn() {
-            currentFOV = Math.max(minFOV, currentFOV - 10);
-            camera.setAttribute('camera', 'fov', currentFOV);
-        }
+        // Initial muted state
+        video.muted = true;
+        muteBtn.textContent = 'Unmute';
+        vrMuteText.setAttribute('value', 'Unmute');
 
-        function zoomOut() {
-            currentFOV = Math.min(maxFOV, currentFOV + 10);
-            camera.setAttribute('camera', 'fov', currentFOV);
-        }
-
+        // Event listeners...
         playPauseBtn.addEventListener('click', togglePlayPause);
         muteBtn.addEventListener('click', toggleMute);
-        zoomInBtn.addEventListener('click', zoomIn);
-        zoomOutBtn.addEventListener('click', zoomOut);
+        zoomInBtn.addEventListener('click', () => {
+            currentFOV = Math.max(minFOV, currentFOV - 10);
+            camera.setAttribute('camera', 'fov', currentFOV);
+        });
+        zoomOutBtn.addEventListener('click', () => {
+            currentFOV = Math.min(maxFOV, currentFOV + 10);
+            camera.setAttribute('camera', 'fov', currentFOV);
+        });
 
+        // VR controls clicks...
         document.querySelector('#vr-play-pause').addEventListener('click', togglePlayPause);
         document.querySelector('#vr-mute').addEventListener('click', toggleMute);
-        document.querySelector('#vr-zoom-in').addEventListener('click', zoomIn);
-        document.querySelector('#vr-zoom-out').addEventListener('click', zoomOut);
+        document.querySelector('#vr-zoom-in').addEventListener('click', zoomInBtn.click.bind(zoomInBtn));
+        document.querySelector('#vr-zoom-out').addEventListener('click', zoomOutBtn.click.bind(zoomOutBtn));
         document.querySelector('#vr-rewind').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); });
         document.querySelector('#vr-forward').addEventListener('click', () => { video.currentTime += 10; });
 
