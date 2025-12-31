@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>1 Local VR Player - Full Immersion</title>
+<title>Local VR Player - Full Immersion</title>
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
@@ -129,15 +129,27 @@ button {
         </video>
     </a-assets>
 
-    <!-- Proper front-facing 180° dome + full 360° support -->
-    <a-sphere
+    <!-- Full sphere for 360° mode -->
+    <a-videosphere
         id="video-sphere"
         src="#vr-video"
         rotation="0 180 0"
-        theta-start="90"
-        theta-length="180"
-        material="shader: flat; side: back">
-    </a-sphere>
+        material="shader: flat; side: back"
+        visible="false">
+    </a-videosphere>
+
+    <!-- Curved front screen for 180° mode -->
+    <a-cylinder
+        id="front-screen"
+        src="#vr-video"
+        radius="5"
+        height="6"
+        theta-length="120"
+        rotation="0 180 0"
+        position="0 0 -4"
+        material="shader: flat; side: double"
+        visible="true">
+    </a-cylinder>
 
     <a-entity id="camera" camera look-controls position="0 1.6 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
@@ -183,27 +195,27 @@ const vrPlayText = document.querySelector('#vr-play a-text');
 const vrMuteText = document.querySelector('#vr-mute a-text');
 const vrTimeText = document.getElementById('vr-time');
 
+const videoSphere = document.getElementById('video-sphere');
+const frontScreen = document.getElementById('front-screen');
+
 let fov = 80;
 
-/* ---------- Mode Selection ---------- */
+/* ---------- Mode Selection - Switch between full sphere and front screen ---------- */
 const opt180 = document.getElementById('opt-180');
 const opt360 = document.getElementById('opt-360');
-const sphere = document.getElementById('video-sphere');
 
 opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
-    sphere.setAttribute('rotation', '0 180 0');
-    sphere.setAttribute('theta-start', '90');
-    sphere.setAttribute('theta-length', '180');
+    videoSphere.setAttribute('visible', false);
+    frontScreen.setAttribute('visible', true);
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
-    sphere.setAttribute('rotation', '0 0 0');
-    sphere.removeAttribute('theta-start');
-    sphere.setAttribute('theta-length', '360');
+    videoSphere.setAttribute('visible', true);
+    frontScreen.setAttribute('visible', false);
 };
 
 /* ---------- File Load ---------- */
