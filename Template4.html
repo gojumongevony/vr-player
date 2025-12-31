@@ -6,7 +6,7 @@
     <title>Local VR Player - Video Visible in Browser</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #111; } /* Dark fallback */
         #startup {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -69,7 +69,6 @@
         button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         button:hover { background: rgba(255,255,255,0.4); }
 
-        /* Custom Full Immersion Button */
         #enter-immersion-btn {
             position: absolute;
             top: 20px;
@@ -104,7 +103,7 @@
         <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg">
     </div>
 
-    <!-- Custom button to enter full immersion -->
+    <!-- Custom immersion button -->
     <button id="enter-immersion-btn">Enter Full Immersion (VR)</button>
 
     <!-- 2D overlay controls -->
@@ -119,7 +118,7 @@
         <div id="time-display">00:00 / 00:00</div>
     </div>
 
-    <a-scene embedded vr-mode-ui="enabled: false" background="transparent">
+    <a-scene embedded vr-mode-ui="enabled: false" renderer="colorManagement: false">
         <a-assets>
             <video id="vr-video" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
@@ -200,7 +199,7 @@
             domControls.style.display = 'flex';
             enterImmersionBtn.style.display = 'block';
 
-            video.addEventListener('loadedmetadata', () => {
+            video.addEventListener('canplaythrough', () => {
                 video.play().catch(() => {});
             }, { once: true });
         });
@@ -209,7 +208,7 @@
             scene.enterVR();
         });
 
-        // Controls
+        // Controls (same as before)
         const playPauseBtn = document.getElementById('play-pause');
         const muteBtn = document.getElementById('mute');
         const seekBar = document.getElementById('seek-bar');
