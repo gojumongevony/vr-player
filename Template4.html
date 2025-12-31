@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Local VR Player - Full Immersion with Button</title>
+    <title>Local VR Player - Video Visible in Browser</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: black; }
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
         #startup {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -119,12 +119,12 @@
         <div id="time-display">00:00 / 00:00</div>
     </div>
 
-    <a-scene embedded vr-mode-ui="enabled: false" background="color: black">
+    <a-scene embedded vr-mode-ui="enabled: false" background="transparent">
         <a-assets>
             <video id="vr-video" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
-        <a-videosphere id="video-sphere" src="#vr-video" rotation="0 180 0"></a-videosphere>
+        <a-sky id="video-sphere" src="#vr-video" rotation="0 180 0"></a-sky>
 
         <a-entity id="rig">
             <a-entity id="camera" camera look-controls position="0 1.6 0">
@@ -201,22 +201,10 @@
             enterImmersionBtn.style.display = 'block';
 
             video.addEventListener('loadedmetadata', () => {
-                video.play().catch(() => {}); // Attempt autoplay
-                updatePlayPauseUI(true);
-                forceTextureUpdate();
+                video.play().catch(() => {});
             }, { once: true });
         });
 
-        // Force texture update function
-        function forceTextureUpdate() {
-            const mesh = videoSphere.getObject3D('mesh');
-            if (mesh && mesh.material && mesh.material.map) {
-                mesh.material.map.needsUpdate = true;
-                mesh.material.needsUpdate = true;
-            }
-        }
-
-        // Custom button to enter full immersion
         enterImmersionBtn.addEventListener('click', () => {
             scene.enterVR();
         });
@@ -244,14 +232,12 @@
             domControls.style.display = 'none';
             enterImmersionBtn.style.display = 'none';
             vrControls.setAttribute('visible', true);
-            forceTextureUpdate(); // Extra refresh in VR
         });
 
         scene.addEventListener('exit-vr', () => {
             domControls.style.display = 'flex';
             enterImmersionBtn.style.display = 'block';
             vrControls.setAttribute('visible', false);
-            forceTextureUpdate();
         });
 
         function togglePlayPause() {
@@ -261,7 +247,6 @@
                 video.pause();
             }
             updatePlayPauseUI(!video.paused);
-            forceTextureUpdate();
         }
 
         function updatePlayPauseUI(playing) {
@@ -292,12 +277,11 @@
         document.querySelector('#vr-mute').addEventListener('click', toggleMute);
         document.querySelector('#vr-zoom-in').addEventListener('click', zoomInBtn.click.bind(zoomInBtn));
         document.querySelector('#vr-zoom-out').addEventListener('click', zoomOutBtn.click.bind(zoomOutBtn));
-        document.querySelector('#vr-rewind').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); forceTextureUpdate(); });
-        document.querySelector('#vr-forward').addEventListener('click', () => { video.currentTime += 10; forceTextureUpdate(); });
+        document.querySelector('#vr-rewind').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); });
+        document.querySelector('#vr-forward').addEventListener('click', () => { video.currentTime += 10; });
 
         seekBar.addEventListener('input', () => {
             video.currentTime = (seekBar.value / 100) * video.duration;
-            forceTextureUpdate();
         });
 
         video.addEventListener('timeupdate', () => {
@@ -310,7 +294,6 @@
             vrProgress.setAttribute('width', progress * 2.5);
             vrProgress.object3D.position.x = (progress * 2.5) / 2 - 1.25;
             updatePlayPauseUI(!video.paused);
-            forceTextureUpdate(); // Frequent update for smooth video
         });
 
         function formatTime(seconds) {
