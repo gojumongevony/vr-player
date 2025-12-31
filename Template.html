@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Local VR Player - Full Immersion</title>
+<title>1 Local VR Player - Full Immersion</title>
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
@@ -129,14 +129,14 @@ button {
         </video>
     </a-assets>
 
-    <!-- Using a-sphere for proper 180° dome (no back side) -->
+    <!-- Proper front-facing 180° dome + full 360° support -->
     <a-sphere
         id="video-sphere"
         src="#vr-video"
         rotation="0 180 0"
+        theta-start="90"
         theta-length="180"
-        scale="-1 1 1"
-        material="shader: flat; side: double">
+        material="shader: flat; side: back">
     </a-sphere>
 
     <a-entity id="camera" camera look-controls position="0 1.6 0">
@@ -194,16 +194,16 @@ opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     sphere.setAttribute('rotation', '0 180 0');
+    sphere.setAttribute('theta-start', '90');
     sphere.setAttribute('theta-length', '180');
-    sphere.setAttribute('scale', '-1 1 1');  // Flip for inside view
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
     sphere.setAttribute('rotation', '0 0 0');
+    sphere.removeAttribute('theta-start');
     sphere.setAttribute('theta-length', '360');
-    sphere.setAttribute('scale', '1 1 1');  // No flip for full sphere
 };
 
 /* ---------- File Load ---------- */
