@@ -1,284 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Local VR Player - Full Immersion for Samsung Galaxy XR</title>
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-        #startup {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            gap: 20px;
-        }
-        #startup h1 { margin: 0 0 10px 0; }
-        #file-input { display: none; }
-        #choose-btn {
-            padding: 15px 30px;
-            font-size: 18px;
-            background: #0078d7;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        #choose-btn:hover { background: #005fa3; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Local VR Player - Full Immersion for Samsung Galaxy XR</title>
 
-        .mode-group {
-            display: flex;
-            gap: 20px;
-        }
-        .mode-option {
-            padding: 12px 24px;
-            font-size: 16px;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid #555;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .mode-option.active {
-            background: #0078d7;
-            border-color: #0078d7;
-        }
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
-        #controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 20px;
-            border-radius: 10px;
-            color: white;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        #seek-bar { width: 600px; max-width: 90vw; }
-        button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: rgba(255,255,255,0.4); }
-    </style>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* ---------- Startup ---------- */
+#startup {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 20px;
+}
+
+#choose-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #0078d7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.mode-group {
+    display: flex;
+    gap: 20px;
+}
+
+.mode-option {
+    padding: 12px 24px;
+    font-size: 16px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.mode-option.active {
+    background: #0078d7;
+    border-color: #0078d7;
+}
+
+/* ---------- Controls ---------- */
+#controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: white;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#seek-bar {
+    width: 600px;
+    max-width: 90vw;
+}
+
+button {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: rgba(255,255,255,0.4);
+}
+</style>
 </head>
+
 <body>
 
-    <!-- Startup screen with video type selection -->
-    <div id="startup">
-        <h1>Local VR Player</h1>
-        <p>Optimized for Samsung Galaxy XR - Full Immersion</p>
-        <p>Select your video type:</p>
-        <div class="mode-group">
-            <div id="opt-180" class="mode-option active">180° VR</div>
-            <div id="opt-360" class="mode-option">360° VR</div>
-        </div>
-        <p>Select a local equirectangular video file (MP4 recommended)</p>
-        <button id="choose-btn">Choose Video File</button>
-        <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg">
+<!-- ---------- Startup ---------- -->
+<div id="startup">
+    <h1>Local VR Player</h1>
+    <p>Optimized for Samsung Galaxy XR</p>
+
+    <div class="mode-group">
+        <div id="opt-180" class="mode-option active">180° VR</div>
+        <div id="opt-360" class="mode-option">360° VR</div>
     </div>
 
-    <!-- 2D overlay controls (visible only outside immersion) -->
-    <div id="controls" style="display:none;">
-        <div>
-            <button id="play-pause">Play</button>
-            <button id="mute">Mute</button>
-            <button id="zoom-in">Zoom In</button>
-            <button id="zoom-out">Zoom Out</button>
-        </div>
-        <input type="range" id="seek-bar" value="0" min="0" max="100" step="0.1">
-        <div id="time-display">00:00 / 00:00</div>
+    <button id="choose-btn">Choose Video File</button>
+    <input id="file-input" type="file" accept="video/mp4,video/webm,video/ogg" hidden>
+</div>
+
+<!-- ---------- 2D Controls ---------- -->
+<div id="controls">
+    <div>
+        <button id="enter-vr">Enter VR</button>
+        <button id="play-pause">Play</button>
+        <button id="mute">Mute</button>
+        <button id="zoom-in">Zoom In</button>
+        <button id="zoom-out">Zoom Out</button>
     </div>
+    <input type="range" id="seek-bar" min="0" max="100" step="0.1">
+    <div id="time-display">00:00 / 00:00</div>
+</div>
 
-    <a-scene embedded vr-mode-ui="enabled: true" style="width:100vw; height:100vh;">
-        <a-assets>
-            <video id="vr-video" autoplay loop crossorigin="anonymous" playsinline webkit-playsinline></video>
-        </a-assets>
+<!-- ---------- A-Frame Scene ---------- -->
+<a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    style="width:100vw; height:100vh;"
+>
+    <a-assets>
+        <video id="vr-video" playsinline webkit-playsinline></video>
+    </a-assets>
 
-        <a-videosphere id="video-sphere" src="#vr-video" rotation="0 180 0"></a-videosphere>
+    <a-videosphere
+        id="video-sphere"
+        src="#vr-video"
+        rotation="0 180 0">
+    </a-videosphere>
 
-        <a-entity id="rig">
-            <a-entity id="camera" camera look-controls position="0 1.6 0">
-                <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
-            </a-entity>
-        </a-entity>
+    <a-entity id="camera" camera look-controls position="0 1.6 0">
+        <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
+    </a-entity>
 
-        <!-- 3D in-scene controls (visible only in immersion mode) -->
-        <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0" scale="0.8 0.8 0.8">
-            <a-plane id="vr-play-pause" class="clickable" width="0.6" height="0.3" material="color: #333" position="-1.2 0.6 0">
-                <a-text value="Play" align="center" color="white" width="2" position="0 0 0.01"></a-text>
-            </a-plane>
-            <a-plane id="vr-mute" class="clickable" width="0.6" height="0.3" material="color: #333" position="-0.4 0.6 0">
-                <a-text value="Mute" align="center" color="white" width="2" position="0 0 0.01"></a-text>
-            </a-plane>
-            <a-plane id="vr-zoom-in" class="clickable" width="0.6" height="0.3" material="color: #333" position="0.4 0.6 0">
-                <a-text value="Zoom In" align="center" color="white" width="2" position="0 0 0.01"></a-text>
-            </a-plane>
-            <a-plane id="vr-zoom-out" class="clickable" width="0.6" height="0.3" material="color: #333" position="1.2 0.6 0">
-                <a-text value="Zoom Out" align="center" color="white" width="2" position="0 0 0.01"></a-text>
-            </a-plane>
-            <a-plane id="vr-seek-bar" width="2.5" height="0.1" material="color: #555" position="0 0.2 0">
-                <a-plane id="vr-progress" width="0" height="0.1" material="color: #00ff00" position="0 0 0.01"></a-plane>
-            </a-plane>
-            <a-plane id="vr-rewind" class="clickable" width="0.5" height="0.3" material="color: #333" position="-1.4 -0.2 0">
-                <a-text value="-10s" align="center" color="white" width="2" position="0 0 0.01"></a-text>
-            </a-plane>
-            <a-plane id="vr-forward" class="clickable" width="0.5" height="0.3" material="color: #333" position="1.4 -0.2 0">
-                <a-text value="+10s" align="center" color="white" width="2" position="0 0 0.01"></a-text>
-            </a-plane>
-            <a-text id="vr-time-display" value="00:00 / 00:00" align="center" color="white" width="3" position="0 -0.6 0"></a-text>
-        </a-entity>
-    </a-scene>
+    <!-- ---------- VR Controls ---------- -->
+    <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0">
+        <a-plane id="vr-play" width="0.6" height="0.3" position="-0.8 0.4 0" color="#333">
+            <a-text value="Play" align="center" color="white" position="0 0 0.01"></a-text>
+        </a-plane>
 
-    <script>
-        const startup = document.getElementById('startup');
-        const chooseBtn = document.getElementById('choose-btn');
-        const fileInput = document.getElementById('file-input');
-        const video = document.getElementById('vr-video');
-        const videoSphere = document.getElementById('video-sphere');
-        const scene = document.querySelector('a-scene');
-        const domControls = document.getElementById('controls');
+        <a-plane id="vr-mute" width="0.6" height="0.3" position="0 0.4 0" color="#333">
+            <a-text value="Mute" align="center" color="white" position="0 0 0.01"></a-text>
+        </a-plane>
 
-        const opt180 = document.getElementById('opt-180');
-        const opt360 = document.getElementById('opt-360');
+        <a-plane id="vr-zoom-in" width="0.6" height="0.3" position="0.8 0.4 0" color="#333">
+            <a-text value="Zoom +" align="center" color="white" position="0 0 0.01"></a-text>
+        </a-plane>
 
-        let is360 = false;
+        <a-text id="vr-time" value="00:00 / 00:00" align="center" color="white" position="0 -0.2 0"></a-text>
+    </a-entity>
+</a-scene>
 
-        opt180.addEventListener('click', () => {
-            is360 = false;
-            opt180.classList.add('active');
-            opt360.classList.remove('active');
-            videoSphere.setAttribute('rotation', '0 180 0');
-        });
+<script>
+const startup = document.getElementById('startup');
+const chooseBtn = document.getElementById('choose-btn');
+const fileInput = document.getElementById('file-input');
+const video = document.getElementById('vr-video');
+const scene = document.querySelector('a-scene');
+const controls = document.getElementById('controls');
 
-        opt360.addEventListener('click', () => {
-            is360 = true;
-            opt360.classList.add('active');
-            opt180.classList.remove('active');
-            videoSphere.setAttribute('rotation', '0 0 0');
-        });
+const enterVrBtn = document.getElementById('enter-vr');
+const playPauseBtn = document.getElementById('play-pause');
+const muteBtn = document.getElementById('mute');
+const seekBar = document.getElementById('seek-bar');
+const timeDisplay = document.getElementById('time-display');
+const zoomInBtn = document.getElementById('zoom-in');
+const zoomOutBtn = document.getElementById('zoom-out');
+const camera = document.getElementById('camera');
 
-        chooseBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+const vrControls = document.getElementById('vr-controls');
+const vrPlayText = document.querySelector('#vr-play a-text');
+const vrMuteText = document.querySelector('#vr-mute a-text');
+const vrTimeText = document.getElementById('vr-time');
 
-            const videoURL = URL.createObjectURL(file);
-            video.src = videoURL;
+let fov = 80;
 
-            startup.style.display = 'none';
-            domControls.style.display = 'flex';
+/* ---------- Video Selection ---------- */
+chooseBtn.onclick = () => fileInput.click();
 
-            video.addEventListener('loadedmetadata', () => {
-                video.play();
-                updatePlayPauseUI(true);
-            }, { once: true });
-        });
+fileInput.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-        // Controls
-        const playPauseBtn = document.getElementById('play-pause');
-        const muteBtn = document.getElementById('mute');
-        const seekBar = document.getElementById('seek-bar');
-        const timeDisplay = document.getElementById('time-display');
-        const zoomInBtn = document.getElementById('zoom-in');
-        const zoomOutBtn = document.getElementById('zoom-out');
-        const camera = document.getElementById('camera');
-        const vrControls = document.getElementById('vr-controls');
+    video.src = URL.createObjectURL(file);
+    startup.style.display = 'none';
+    controls.style.display = 'flex';
 
-        const vrPlayPauseText = document.querySelector('#vr-play-pause a-text');
-        const vrMuteText = document.querySelector('#vr-mute a-text');
-        const vrProgress = document.getElementById('vr-progress');
-        const vrTimeDisplay = document.getElementById('vr-time-display');
+    video.onloadedmetadata = () => video.play();
+};
 
-        let currentFOV = 80;
-        const minFOV = 30;
-        const maxFOV = 120;
+/* ---------- VR Button ---------- */
+enterVrBtn.onclick = () => {
+    scene.is('vr-mode') ? scene.exitVR() : scene.enterVR();
+};
 
-        // Full immersion mode handling
-        scene.addEventListener('enter-vr', () => {
-            domControls.style.display = 'none';
-            vrControls.setAttribute('visible', true);
-        });
+scene.addEventListener('enter-vr', () => {
+    controls.style.display = 'none';
+    vrControls.setAttribute('visible', true);
+    enterVrBtn.textContent = 'Exit VR';
+});
 
-        scene.addEventListener('exit-vr', () => {
-            domControls.style.display = 'flex';
-            vrControls.setAttribute('visible', false);
-        });
+scene.addEventListener('exit-vr', () => {
+    controls.style.display = 'flex';
+    vrControls.setAttribute('visible', false);
+    enterVrBtn.textContent = 'Enter VR';
+});
 
-        function togglePlayPause() {
-            if (video.paused) {
-                video.play();
-            } else {
-                video.pause();
-            }
-            updatePlayPauseUI(!video.paused);
-        }
+/* ---------- Playback ---------- */
+function togglePlay() {
+    video.paused ? video.play() : video.pause();
+    const label = video.paused ? 'Play' : 'Pause';
+    playPauseBtn.textContent = label;
+    vrPlayText.setAttribute('value', label);
+}
 
-        function updatePlayPauseUI(playing) {
-            const text = playing ? 'Pause' : 'Play';
-            playPauseBtn.textContent = text;
-            vrPlayPauseText.setAttribute('value', text);
-        }
+function toggleMute() {
+    video.muted = !video.muted;
+    const label = video.muted ? 'Unmute' : 'Mute';
+    muteBtn.textContent = label;
+    vrMuteText.setAttribute('value', label);
+}
 
-        function toggleMute() {
-            video.muted = !video.muted;
-            const text = video.muted ? 'Unmute' : 'Mute';
-            muteBtn.textContent = text;
-            vrMuteText.setAttribute('value', text);
-        }
+playPauseBtn.onclick = togglePlay;
+muteBtn.onclick = toggleMute;
+document.getElementById('vr-play').onclick = togglePlay;
+document.getElementById('vr-mute').onclick = toggleMute;
 
-        function zoomIn() {
-            currentFOV = Math.max(minFOV, currentFOV - 10);
-            camera.setAttribute('camera', 'fov', currentFOV);
-        }
+/* ---------- Zoom ---------- */
+zoomInBtn.onclick = () => {
+    fov = Math.max(30, fov - 10);
+    camera.setAttribute('camera', 'fov', fov);
+};
 
-        function zoomOut() {
-            currentFOV = Math.min(maxFOV, currentFOV + 10);
-            camera.setAttribute('camera', 'fov', currentFOV);
-        }
+zoomOutBtn.onclick = () => {
+    fov = Math.min(120, fov + 10);
+    camera.setAttribute('camera', 'fov', fov);
+};
 
-        playPauseBtn.addEventListener('click', togglePlayPause);
-        muteBtn.addEventListener('click', toggleMute);
-        zoomInBtn.addEventListener('click', zoomIn);
-        zoomOutBtn.addEventListener('click', zoomOut);
+document.getElementById('vr-zoom-in').onclick = zoomInBtn.onclick;
 
-        document.querySelector('#vr-play-pause').addEventListener('click', togglePlayPause);
-        document.querySelector('#vr-mute').addEventListener('click', toggleMute);
-        document.querySelector('#vr-zoom-in').addEventListener('click', zoomIn);
-        document.querySelector('#vr-zoom-out').addEventListener('click', zoomOut);
-        document.querySelector('#vr-rewind').addEventListener('click', () => { video.currentTime = Math.max(0, video.currentTime - 10); });
-        document.querySelector('#vr-forward').addEventListener('click', () => { video.currentTime += 10; });
+/* ---------- Progress ---------- */
+video.ontimeupdate = () => {
+    const p = video.currentTime / video.duration || 0;
+    seekBar.value = p * 100;
+    const t = `${fmt(video.currentTime)} / ${fmt(video.duration)}`;
+    timeDisplay.textContent = t;
+    vrTimeText.setAttribute('value', t);
+};
 
-        seekBar.addEventListener('input', () => {
-            video.currentTime = (seekBar.value / 100) * video.duration;
-        });
+seekBar.oninput = () => {
+    video.currentTime = (seekBar.value / 100) * video.duration;
+};
 
-        video.addEventListener('timeupdate', () => {
-            const progress = (video.currentTime / video.duration) || 0;
-            seekBar.value = progress * 100;
-            const timeStr = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-            timeDisplay.textContent = timeStr;
-            vrTimeDisplay.setAttribute('value', timeStr);
+function fmt(s) {
+    if (!s) return '00:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+}
+</script>
 
-            vrProgress.setAttribute('width', progress * 2.5);
-            vrProgress.object3D.position.x = (progress * 2.5) / 2 - 1.25;
-            updatePlayPauseUI(!video.paused);
-        });
-
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return '00:00';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-    </script>
 </body>
 </html>
