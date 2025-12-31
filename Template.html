@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>1 Local VR Player - Full Immersion</title>
+<title>2 Local VR Player - Full Room Immersion</title>
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
@@ -181,7 +181,7 @@ button, select {
         </video>
     </a-assets>
 
-    <!-- Classic Videosphere (hidden in immersion) -->
+    <!-- Classic full videosphere (used in normal mode) -->
     <a-videosphere
         id="video-sphere"
         src="#vr-video"
@@ -189,24 +189,26 @@ button, select {
         material="shader: flat; side: back">
     </a-videosphere>
 
-    <!-- Floor-Placed Curved Screen (visible only in immersion) -->
-    <a-cylinder
-        id="floor-screen"
+    <!-- Giant room-sized immersion screen (partial sphere on floor) -->
+    <a-sphere
+        id="room-screen"
         src="#vr-video"
-        radius="4"
-        height="2.5"
-        theta-length="90"
+        radius="8"
+        segments-width="64"
+        segments-height="32"
+        theta-start="55"
+        theta-length="70"
         rotation="0 180 0"
-        position="0 1.25 -3"
-        material="shader: flat; side: double"
+        position="0 0 -4"
+        material="shader: flat; side: back"
         visible="false">
-    </a-cylinder>
+    </a-sphere>
 
     <a-entity id="camera" camera look-controls wasd-controls-enabled="false" position="0 1.6 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
     </a-entity>
 
-    <!-- VR Controls Panel (same as before) -->
+    <!-- VR Controls Panel -->
     <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0">
         <a-plane width="1.8" height="1.2" position="0 0 0" color="#222" opacity="0.8" material="side: double"></a-plane>
 
@@ -262,7 +264,7 @@ const vrMuteText = document.querySelector('#vr-mute a-text');
 const vrTimeText = document.getElementById('vr-time');
 
 const videoSphere = document.getElementById('video-sphere');
-const floorScreen = document.getElementById('floor-screen');
+const roomScreen = document.getElementById('room-screen');
 
 let fov = 80;
 let controlsTimeout;
@@ -272,22 +274,28 @@ let isDragging = false;
 const opt180 = document.getElementById('opt-180');
 const opt360 = document.getElementById('opt-360');
 const opt360tb = document.getElementById('opt-360-tb');
-const sphere = document.getElementById('video-sphere');
 
 function setMode(mode) {
     [opt180, opt360, opt360tb].forEach(el => el.classList.remove('active'));
+    
     if (mode === '180') {
         opt180.classList.add('active');
-        sphere.setAttribute('rotation', '0 180 0');
-        sphere.setAttribute('material', 'stereo: none');
+        videoSphere.setAttribute('rotation', '0 180 0');
+        roomScreen.setAttribute('rotation', '0 180 0');
+        videoSphere.setAttribute('material', 'stereo: none');
+        roomScreen.setAttribute('material', 'stereo: none');
     } else if (mode === '360') {
         opt360.classList.add('active');
-        sphere.setAttribute('rotation', '0 0 0');
-        sphere.setAttribute('material', 'stereo: none');
+        videoSphere.setAttribute('rotation', '0 0 0');
+        roomScreen.setAttribute('rotation', '0 180 0'); // front-facing for theater feel
+        videoSphere.setAttribute('material', 'stereo: none');
+        roomScreen.setAttribute('material', 'stereo: none');
     } else if (mode === '360tb') {
         opt360tb.classList.add('active');
-        sphere.setAttribute('rotation', '0 0 0');
-        sphere.setAttribute('material', 'stereo: top-bottom');
+        videoSphere.setAttribute('rotation', '0 0 0');
+        roomScreen.setAttribute('rotation', '0 180 0');
+        videoSphere.setAttribute('material', 'stereo: top-bottom');
+        roomScreen.setAttribute('material', 'stereo: top-bottom');
     }
 }
 
@@ -344,13 +352,12 @@ function showControls() {
 controls.addEventListener('mousemove', showControls);
 controls.addEventListener('touchstart', showControls, {passive: true});
 
-/* ---------- VR Toggle with Floor Screen ---------- */
+/* ---------- Full Immersion with Room-Sized Screen ---------- */
 enterVrBtn.onclick = async () => {
     if (scene.is('vr-mode')) {
         scene.exitVR();
     } else {
-        // Request local-floor for real floor alignment
-        await scene.enterVR({referenceSpaceType: 'local-floor'});
+        await scene.enterVR({referenceSpaceType: 'local-floor'}).catch(() => scene.enterVR());
     }
 };
 
@@ -359,9 +366,8 @@ scene.addEventListener('enter-vr', () => {
     vrControls.setAttribute('visible', true);
     enterVrBtn.textContent = 'Exit Immersion';
 
-    // Switch to floor-placed screen
     videoSphere.setAttribute('visible', false);
-    floorScreen.setAttribute('visible', true);
+    roomScreen.setAttribute('visible', true);
 });
 
 scene.addEventListener('exit-vr', () => {
@@ -370,9 +376,8 @@ scene.addEventListener('exit-vr', () => {
     vrControls.setAttribute('visible', false);
     enterVrBtn.textContent = 'Enter Full Immersion';
 
-    // Back to classic sphere
     videoSphere.setAttribute('visible', true);
-    floorScreen.setAttribute('visible', false);
+    roomScreen.setAttribute('visible', false);
 });
 
 /* ---------- Playback Controls ---------- */
@@ -409,7 +414,7 @@ document.getElementById('vr-play').onclick = togglePlay;
 document.getElementById('vr-mute').onclick = toggleMute;
 document.getElementById('vr-recenter').onclick = recenterView;
 
-/* ---------- Zoom (affects both modes) ---------- */
+/* ---------- Zoom ---------- */
 function updateZoom() {
     document.querySelector('#camera').setAttribute('camera', 'fov', fov);
 }
