@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Local VR Player - Full Immersion for Samsung Galaxy XR</title>
+<title>Local VR Player - Full Immersion</title>
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
@@ -14,7 +14,6 @@ body {
     font-family: Arial, sans-serif;
 }
 
-/* ---------- Startup ---------- */
 #startup {
     position: absolute;
     inset: 0;
@@ -28,16 +27,6 @@ body {
     gap: 20px;
 }
 
-#choose-btn {
-    padding: 15px 30px;
-    font-size: 18px;
-    background: #0078d7;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
 .mode-group {
     display: flex;
     gap: 20px;
@@ -45,7 +34,6 @@ body {
 
 .mode-option {
     padding: 12px 24px;
-    font-size: 16px;
     background: rgba(255,255,255,0.1);
     border: 2px solid #555;
     border-radius: 8px;
@@ -57,7 +45,16 @@ body {
     border-color: #0078d7;
 }
 
-/* ---------- Controls ---------- */
+#choose-btn {
+    padding: 14px 28px;
+    font-size: 18px;
+    background: #0078d7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
 #controls {
     position: absolute;
     bottom: 20px;
@@ -87,10 +84,6 @@ button {
     border-radius: 5px;
     cursor: pointer;
 }
-
-button:hover {
-    background: rgba(255,255,255,0.4);
-}
 </style>
 </head>
 
@@ -99,7 +92,6 @@ button:hover {
 <!-- ---------- Startup ---------- -->
 <div id="startup">
     <h1>Local VR Player</h1>
-    <p>Optimized for Samsung Galaxy XR</p>
 
     <div class="mode-group">
         <div id="opt-180" class="mode-option active">180° VR</div>
@@ -124,19 +116,25 @@ button:hover {
 </div>
 
 <!-- ---------- A-Frame Scene ---------- -->
-<a-scene
-    embedded
-    vr-mode-ui="enabled: false"
-    style="width:100vw; height:100vh;"
->
+<a-scene embedded vr-mode-ui="enabled: false" style="width:100vw; height:100vh;">
     <a-assets>
-        <video id="vr-video" playsinline webkit-playsinline></video>
+        <!-- CRITICAL FIX: mobile-safe video attributes -->
+        <video
+            id="vr-video"
+            autoplay
+            muted
+            loop
+            crossorigin="anonymous"
+            playsinline
+            webkit-playsinline>
+        </video>
     </a-assets>
 
     <a-videosphere
         id="video-sphere"
         src="#vr-video"
-        rotation="0 180 0">
+        rotation="0 180 0"
+        material="shader: flat; side: back">
     </a-videosphere>
 
     <a-entity id="camera" camera look-controls position="0 1.6 0">
@@ -185,7 +183,24 @@ const vrTimeText = document.getElementById('vr-time');
 
 let fov = 80;
 
-/* ---------- Video Selection ---------- */
+/* ---------- Mode Selection ---------- */
+const opt180 = document.getElementById('opt-180');
+const opt360 = document.getElementById('opt-360');
+const sphere = document.getElementById('video-sphere');
+
+opt180.onclick = () => {
+    opt180.classList.add('active');
+    opt360.classList.remove('active');
+    sphere.setAttribute('rotation', '0 180 0');
+};
+
+opt360.onclick = () => {
+    opt360.classList.add('active');
+    opt180.classList.remove('active');
+    sphere.setAttribute('rotation', '0 0 0');
+};
+
+/* ---------- File Load ---------- */
 chooseBtn.onclick = () => fileInput.click();
 
 fileInput.onchange = e => {
@@ -193,13 +208,18 @@ fileInput.onchange = e => {
     if (!file) return;
 
     video.src = URL.createObjectURL(file);
+    video.load();
+
     startup.style.display = 'none';
     controls.style.display = 'flex';
 
-    video.onloadedmetadata = () => video.play();
+    video.onloadeddata = () => {
+        video.muted = true;
+        video.play();
+    };
 };
 
-/* ---------- VR Button ---------- */
+/* ---------- VR Toggle ---------- */
 enterVrBtn.onclick = () => {
     scene.is('vr-mode') ? scene.exitVR() : scene.enterVR();
 };
@@ -263,7 +283,7 @@ seekBar.oninput = () => {
 };
 
 function fmt(s) {
-    if (!s) return '00:00';
+    if (!s || isNaN(s)) return '00:00';
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
