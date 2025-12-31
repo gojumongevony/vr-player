@@ -66,26 +66,26 @@
             gap: 10px;
         }
         #seek-bar { width: 600px; max-width: 90vw; }
-        button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: rgba(255,255,255,0.4); }
-
-        /* Custom Full Immersion Button - ONLY NEW ADDITION */
-        #enter-immersion-btn {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 30px;
-            font-size: 18px;
-            background: #ff5722;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 20;
-            display: none;
+        #button-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        #enter-immersion-btn:hover { background: #e64a19; }
+        button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: rgba(255,255,255,0.4); }
+        #enter-immersion-btn {
+            background: #ff5722;
+        }
+        #enter-immersion-btn:hover {
+            background: #e64a19;
+        }
     </style>
 </head>
 <body>
@@ -104,12 +104,10 @@
         <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg">
     </div>
 
-    <!-- NEW: Custom button to enter full immersion -->
-    <button id="enter-immersion-btn">Enter Full Immersion (VR)</button>
-
     <!-- 2D overlay controls -->
     <div id="controls" style="display:none;">
-        <div>
+        <div id="button-row">
+            <button id="enter-immersion-btn">Full Immersion (VR)</button>
             <button id="play-pause">Play</button>
             <button id="mute">Mute</button>
             <button id="zoom-in">Zoom In</button>
@@ -198,7 +196,6 @@
 
             startup.style.display = 'none';
             domControls.style.display = 'flex';
-            enterImmersionBtn.style.display = 'block'; // Show the new button
 
             video.addEventListener('loadedmetadata', () => {
                 video.play();
@@ -206,7 +203,7 @@
             }, { once: true });
         });
 
-        // NEW: Custom immersion button click handler
+        // Custom immersion button - placed next to Play button
         enterImmersionBtn.addEventListener('click', () => {
             scene.enterVR();
         });
@@ -232,13 +229,11 @@
 
         scene.addEventListener('enter-vr', () => {
             domControls.style.display = 'none';
-            enterImmersionBtn.style.display = 'none';
             vrControls.setAttribute('visible', true);
         });
 
         scene.addEventListener('exit-vr', () => {
             domControls.style.display = 'flex';
-            enterImmersionBtn.style.display = 'block';
             vrControls.setAttribute('visible', false);
         });
 
