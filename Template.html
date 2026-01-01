@@ -139,11 +139,11 @@ button {
     <a-videosphere
         id="video-sphere"
         src="#vr-video"
-        rotation="0 -90 0"
+        rotation="0 180 0"
         material="shader: flat; side: back">
     </a-videosphere>
 
-    <a-entity id="camera" camera look-controls position="0 1.6 0">
+    <a-entity id="camera" camera look-controls position="0 1.6 0" rotation="0 0 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
     </a-entity>
 
@@ -204,7 +204,8 @@ opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     is180Mode = true;
-    sphere.setAttribute('rotation', '0 -90 0');
+    sphere.setAttribute('rotation', '0 180 0');
+    camera.setAttribute('rotation', '0 90 0');
 };
 
 opt360.onclick = () => {
@@ -212,6 +213,7 @@ opt360.onclick = () => {
     opt180.classList.remove('active');
     is180Mode = false;
     sphere.setAttribute('rotation', '0 180 0');
+    camera.setAttribute('rotation', '0 0 0');
 };
 
 /* ---------- File Load ---------- */
