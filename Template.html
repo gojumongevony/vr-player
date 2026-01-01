@@ -136,13 +136,27 @@ button {
         </video>
     </a-assets>
 
+    <!-- 180 degree sphere (half sphere) -->
+    <a-sphere
+        id="video-sphere-180"
+        src="#vr-video"
+        radius="100"
+        rotation="0 0 0"
+        phi-start="0"
+        phi-length="180"
+        segments-width="64"
+        segments-height="64"
+        material="shader: flat; side: back"
+        visible="true">
+    </a-sphere>
+
+    <!-- 360 degree sphere (full sphere) -->
     <a-videosphere
-        id="video-sphere"
+        id="video-sphere-360"
         src="#vr-video"
         rotation="0 0 0"
-        theta-start="90"
-        theta-length="180"
-        material="shader: flat; side: back">
+        material="shader: flat; side: back"
+        visible="false">
     </a-videosphere>
 
     <a-entity id="camera" camera look-controls position="0 1.6 0" rotation="0 0 0">
@@ -200,26 +214,23 @@ let is180Mode = true;
 /* ---------- Mode Selection ---------- */
 const opt180 = document.getElementById('opt-180');
 const opt360 = document.getElementById('opt-360');
-const sphere = document.getElementById('video-sphere');
+const sphere180 = document.getElementById('video-sphere-180');
+const sphere360 = document.getElementById('video-sphere-360');
 
 opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     is180Mode = true;
-    sphere.setAttribute('rotation', '0 0 0');
-    sphere.setAttribute('theta-start', '90');
-    sphere.setAttribute('theta-length', '180');
-    camera.setAttribute('rotation', '0 0 0');
+    sphere180.setAttribute('visible', 'true');
+    sphere360.setAttribute('visible', 'false');
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
     is180Mode = false;
-    sphere.setAttribute('rotation', '0 0 0');
-    sphere.setAttribute('theta-start', '0');
-    sphere.setAttribute('theta-length', '360');
-    camera.setAttribute('rotation', '0 0 0');
+    sphere180.setAttribute('visible', 'false');
+    sphere360.setAttribute('visible', 'true');
 };
 
 /* ---------- File Load ---------- */
