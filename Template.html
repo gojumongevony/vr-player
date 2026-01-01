@@ -139,7 +139,8 @@ button {
     <a-videosphere
         id="video-sphere"
         src="#vr-video"
-        rotation="0 180 0"
+        rotation="0 0 0"
+        theta-length="180"
         material="shader: flat; side: back">
     </a-videosphere>
 
@@ -204,15 +205,17 @@ opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     is180Mode = true;
-    sphere.setAttribute('rotation', '0 180 0');
-    camera.setAttribute('rotation', '0 90 0');
+    sphere.setAttribute('rotation', '0 0 0');
+    sphere.setAttribute('theta-length', '180');
+    camera.setAttribute('rotation', '0 0 0');
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
     is180Mode = false;
-    sphere.setAttribute('rotation', '0 180 0');
+    sphere.setAttribute('rotation', '0 0 0');
+    sphere.setAttribute('theta-length', '360');
     camera.setAttribute('rotation', '0 0 0');
 };
 
