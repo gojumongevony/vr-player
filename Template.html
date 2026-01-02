@@ -6,6 +6,7 @@
 <title>Local VR Player - Full Immersion</title>
 
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/oscarmarinmiro/aframe-stereo-component@master/dist/aframe-stereo-component.min.js"></script>
 
 <style>
 body {
@@ -107,9 +108,21 @@ button {
 <div id="startup">
     <h1>Local VR Player</h1>
 
-    <div class="mode-group">
-        <div id="opt-180" class="mode-option active">180° VR</div>
-        <div id="opt-360" class="mode-option">360° VR</div>
+    <div>
+        <div class="label">Video Type</div>
+        <div class="mode-group">
+            <div id="opt-180" class="mode-option active">180° VR</div>
+            <div id="opt-360" class="mode-option">360° VR</div>
+        </div>
+    </div>
+
+    <div>
+        <div class="label">Stereo Format</div>
+        <div class="mode-group">
+            <div id="opt-mono" class="mode-option active">Mono</div>
+            <div id="opt-sbs" class="mode-option">Side-by-Side</div>
+            <div id="opt-tb" class="mode-option">Top-Bottom</div>
+        </div>
     </div>
 
     <button id="choose-btn">Choose Video File</button>
@@ -144,28 +157,25 @@ button {
         </video>
     </a-assets>
 
-    <!-- 180 degree sphere (half sphere) -->
-    <a-sphere
+    <!-- 180 degree sphere with stereo support -->
+    <a-entity
         id="video-sphere-180"
-        src="#vr-video"
-        radius="100"
+        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64; phiStart: 0; phiLength: 180"
+        material="shader: flat; side: back; src: #vr-video"
         rotation="0 180 0"
-        phi-start="0"
-        phi-length="180"
-        segments-width="64"
-        segments-height="64"
-        material="shader: flat; side: back"
+        stereo="eye: both; mode: mono"
         visible="true">
-    </a-sphere>
+    </a-entity>
 
-    <!-- 360 degree sphere (full sphere) -->
-    <a-videosphere
+    <!-- 360 degree sphere with stereo support -->
+    <a-entity
         id="video-sphere-360"
-        src="#vr-video"
+        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        material="shader: flat; side: back; src: #vr-video"
         rotation="0 0 0"
-        material="shader: flat; side: back"
+        stereo="eye: both; mode: mono"
         visible="false">
-    </a-videosphere>
+    </a-entity>
 
     <a-entity id="camera" camera look-controls position="0 1.6 0" rotation="0 0 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
@@ -218,10 +228,14 @@ const vrTimeText = document.getElementById('vr-time');
 
 let fov = 80;
 let is180Mode = true;
+let stereoMode = 'mono'; // 'mono', 'sbs' (side-by-side), 'tb' (top-bottom)
 
 /* ---------- Mode Selection ---------- */
 const opt180 = document.getElementById('opt-180');
 const opt360 = document.getElementById('opt-360');
+const optMono = document.getElementById('opt-mono');
+const optSBS = document.getElementById('opt-sbs');
+const optTB = document.getElementById('opt-tb');
 const sphere180 = document.getElementById('video-sphere-180');
 const sphere360 = document.getElementById('video-sphere-360');
 
@@ -229,17 +243,73 @@ opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     is180Mode = true;
-    sphere180.setAttribute('visible', 'true');
-    sphere360.setAttribute('visible', 'false');
+    updateSphereVisibility();
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
     is180Mode = false;
-    sphere180.setAttribute('visible', 'false');
-    sphere360.setAttribute('visible', 'true');
+    updateSphereVisibility();
 };
+
+/* ---------- Stereo Mode Selection ---------- */
+optMono.onclick = () => {
+    optMono.classList.add('active');
+    optSBS.classList.remove('active');
+    optTB.classList.remove('active');
+    stereoMode = 'mono';
+    updateStereoMode();
+};
+
+optSBS.onclick = () => {
+    optMono.classList.remove('active');
+    optSBS.classList.add('active');
+    optTB.classList.remove('active');
+    stereoMode = 'sbs';
+    updateStereoMode();
+};
+
+optTB.onclick = () => {
+    optMono.classList.remove('active');
+    optSBS.classList.remove('active');
+    optTB.classList.add('active');
+    stereoMode = 'tb';
+    updateStereoMode();
+};
+
+/* ---------- Update Sphere Configuration ---------- */
+function updateSphereVisibility() {
+    if (is180Mode) {
+        sphere180.setAttribute('visible', 'true');
+        sphere360.setAttribute('visible', 'false');
+    } else {
+        sphere180.setAttribute('visible', 'false');
+        sphere360.setAttribute('visible', 'true');
+    }
+}
+
+function updateStereoMode() {
+    const activeSphere = is180Mode ? sphere180 : sphere360;
+    
+    if (stereoMode === 'mono') {
+        activeSphere.setAttribute('stereo', 'eye: both; mode: mono');
+    } else if (stereoMode === 'sbs') {
+        activeSphere.setAttribute('stereo', 'eye: both; mode: side-by-side; split: horizontal');
+    } else if (stereoMode === 'tb') {
+        activeSphere.setAttribute('stereo', 'eye: both; mode: top-bottom; split: vertical');
+    }
+    
+    // Also update the inactive sphere so it's ready if switched
+    const inactiveSphere = is180Mode ? sphere360 : sphere180;
+    if (stereoMode === 'mono') {
+        inactiveSphere.setAttribute('stereo', 'eye: both; mode: mono');
+    } else if (stereoMode === 'sbs') {
+        inactiveSphere.setAttribute('stereo', 'eye: both; mode: side-by-side; split: horizontal');
+    } else if (stereoMode === 'tb') {
+        inactiveSphere.setAttribute('stereo', 'eye: both; mode: top-bottom; split: vertical');
+    }
+}
 
 /* ---------- File Load ---------- */
 chooseBtn.onclick = () => fileInput.click();
