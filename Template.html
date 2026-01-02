@@ -420,6 +420,22 @@ scene.addEventListener('loaded', () => {
             el.setAttribute('color', '#333');
         });
     });
+    
+    // Modify 180 sphere geometry to be true 180 degrees
+    const sphere180El = document.getElementById('video-sphere-180');
+    const mesh180 = sphere180El.getObject3D('mesh');
+    if (mesh180) {
+        const newGeometry = new THREE.SphereGeometry(
+            100,
+            64,
+            64,
+            -Math.PI / 2,   // phiStart (-90 degrees, start from left)
+            Math.PI,        // phiLength (180 degrees horizontal sweep)
+            0,              // thetaStart  
+            Math.PI         // thetaLength (180 degrees vertical - full hemisphere)
+        );
+        mesh180.geometry = newGeometry;
+    }
 });
 
 /* ---------- Progress ---------- */
