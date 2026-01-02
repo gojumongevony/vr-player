@@ -157,23 +157,43 @@ button {
         </video>
     </a-assets>
 
-    <!-- 180 degree sphere with stereo support -->
+    <!-- 180 degree sphere with stereo support - Left Eye -->
     <a-entity
-        id="video-sphere-180"
+        id="video-sphere-180-left"
         geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video; npot: true"
         rotation="0 180 0"
-        stereo="eye: both; mode: side-by-side; split: horizontal"
+        layers="type: left"
         visible="true">
     </a-entity>
 
-    <!-- 360 degree sphere with stereo support -->
+    <!-- 180 degree sphere with stereo support - Right Eye -->
     <a-entity
-        id="video-sphere-360"
+        id="video-sphere-180-right"
+        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        material="shader: flat; side: back; src: #vr-video; npot: true"
+        rotation="0 180 0"
+        layers="type: right"
+        visible="true">
+    </a-entity>
+
+    <!-- 360 degree sphere with stereo support - Left Eye -->
+    <a-entity
+        id="video-sphere-360-left"
         geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video"
         rotation="0 0 0"
-        stereo="eye: both; mode: side-by-side; split: horizontal"
+        layers="type: left"
+        visible="false">
+    </a-entity>
+
+    <!-- 360 degree sphere with stereo support - Right Eye -->
+    <a-entity
+        id="video-sphere-360-right"
+        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        material="shader: flat; side: back; src: #vr-video"
+        rotation="0 0 0"
+        layers="type: right"
         visible="false">
     </a-entity>
 
@@ -236,8 +256,10 @@ const opt360 = document.getElementById('opt-360');
 const optMono = document.getElementById('opt-mono');
 const optSBS = document.getElementById('opt-sbs');
 const optTB = document.getElementById('opt-tb');
-const sphere180 = document.getElementById('video-sphere-180');
-const sphere360 = document.getElementById('video-sphere-360');
+const sphere180Left = document.getElementById('video-sphere-180-left');
+const sphere180Right = document.getElementById('video-sphere-180-right');
+const sphere360Left = document.getElementById('video-sphere-360-left');
+const sphere360Right = document.getElementById('video-sphere-360-right');
 
 opt180.onclick = () => {
     opt180.classList.add('active');
@@ -421,22 +443,61 @@ scene.addEventListener('loaded', () => {
         });
     });
     
-    // Modify 180 sphere geometry to be true 180 degrees
-    const sphere180El = document.getElementById('video-sphere-180');
-    const mesh180 = sphere180El.getObject3D('mesh');
-    if (mesh180) {
-        const newGeometry = new THREE.SphereGeometry(
+    // Setup all spheres with proper geometry and UV mapping
+    setupSphere(sphere180Left, true, 'left');
+    setupSphere(sphere180Right, true, 'right');
+    setupSphere(sphere360Left, false, 'left');
+    setupSphere(sphere360Right, false, 'right');
+});
+
+function setupSphere(sphereEl, is180, eye) {
+    const mesh = sphereEl.getObject3D('mesh');
+    if (!mesh) return;
+    
+    let geometry;
+    if (is180) {
+        // Create 180-degree hemisphere
+        geometry = new THREE.SphereGeometry(
             100,
             64,
             64,
-            -Math.PI / 2,   // phiStart (-90 degrees, start from left)
-            Math.PI,        // phiLength (180 degrees horizontal sweep)
-            0,              // thetaStart  
-            Math.PI         // thetaLength (180 degrees vertical - full hemisphere)
+            -Math.PI / 2,   // phiStart (-90 degrees)
+            Math.PI,        // phiLength (180 degrees horizontal)
+            0,              // thetaStart
+            Math.PI         // thetaLength (180 degrees vertical)
         );
-        mesh180.geometry = newGeometry;
+    } else {
+        // Full 360 sphere
+        geometry = new THREE.SphereGeometry(100, 64, 64);
     }
-});
+    
+    // Apply UV mapping based on stereo mode and eye
+    const uvAttribute = geometry.attributes.uv;
+    for (let i = 0; i < uvAttribute.count; i++) {
+        const u = uvAttribute.getX(i);
+        const v = uvAttribute.getY(i);
+        
+        if (stereoMode === 'sbs') {
+            // Side-by-side: left eye uses left half (0-0.5), right eye uses right half (0.5-1.0)
+            if (eye === 'left') {
+                uvAttribute.setX(i, u * 0.5);
+            } else {
+                uvAttribute.setX(i, 0.5 + u * 0.5);
+            }
+        } else if (stereoMode === 'tb') {
+            // Top-bottom: left/top eye uses top half, right/bottom eye uses bottom half
+            if (eye === 'left') {
+                uvAttribute.setY(i, v * 0.5);
+            } else {
+                uvAttribute.setY(i, 0.5 + v * 0.5);
+            }
+        }
+        // For mono mode, leave UVs as-is (full texture)
+    }
+    uvAttribute.needsUpdate = true;
+    
+    mesh.geometry = geometry;
+}
 
 /* ---------- Progress ---------- */
 video.ontimeupdate = () => {
