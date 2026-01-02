@@ -160,9 +160,9 @@ button {
     <!-- 180 degree sphere with stereo support -->
     <a-entity
         id="video-sphere-180"
-        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64; phiStart: 0; phiLength: 180"
+        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64; phiStart: 0; phiLength: 180; thetaStart: 0; thetaLength: 180"
         material="shader: flat; side: back; src: #vr-video"
-        rotation="0 180 0"
+        rotation="0 0 0"
         stereo="eye: both; mode: mono"
         visible="true">
     </a-entity>
@@ -243,14 +243,16 @@ opt180.onclick = () => {
     opt180.classList.add('active');
     opt360.classList.remove('active');
     is180Mode = true;
-    updateSphereVisibility();
+    sphere180.setAttribute('visible', 'true');
+    sphere360.setAttribute('visible', 'false');
 };
 
 opt360.onclick = () => {
     opt360.classList.add('active');
     opt180.classList.remove('active');
     is180Mode = false;
-    updateSphereVisibility();
+    sphere180.setAttribute('visible', 'false');
+    sphere360.setAttribute('visible', 'true');
 };
 
 /* ---------- Stereo Mode Selection ---------- */
@@ -259,7 +261,6 @@ optMono.onclick = () => {
     optSBS.classList.remove('active');
     optTB.classList.remove('active');
     stereoMode = 'mono';
-    updateStereoMode();
 };
 
 optSBS.onclick = () => {
@@ -267,7 +268,6 @@ optSBS.onclick = () => {
     optSBS.classList.add('active');
     optTB.classList.remove('active');
     stereoMode = 'sbs';
-    updateStereoMode();
 };
 
 optTB.onclick = () => {
@@ -275,41 +275,39 @@ optTB.onclick = () => {
     optSBS.classList.remove('active');
     optTB.classList.add('active');
     stereoMode = 'tb';
-    updateStereoMode();
 };
 
-/* ---------- Update Sphere Configuration ---------- */
-function updateSphereVisibility() {
-    if (is180Mode) {
-        sphere180.setAttribute('visible', 'true');
-        sphere360.setAttribute('visible', 'false');
+/* ---------- Video Processing ---------- */
+function processVideoFrame() {
+    if (video.paused || video.ended) return;
+    
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    
+    // Adjust canvas size based on stereo mode
+    if (stereoMode === 'sbs') {
+        // Side-by-side: use left half only
+        videoCanvas.width = vw / 2;
+        videoCanvas.height = vh;
+        ctx.drawImage(video, 0, 0, vw / 2, vh, 0, 0, vw / 2, vh);
+    } else if (stereoMode === 'tb') {
+        // Top-bottom: use top half only
+        videoCanvas.width = vw;
+        videoCanvas.height = vh / 2;
+        ctx.drawImage(video, 0, 0, vw, vh / 2, 0, 0, vw, vh / 2);
     } else {
-        sphere180.setAttribute('visible', 'false');
-        sphere360.setAttribute('visible', 'true');
+        // Mono: use full video
+        videoCanvas.width = vw;
+        videoCanvas.height = vh;
+        ctx.drawImage(video, 0, 0, vw, vh);
     }
+    
+    requestAnimationFrame(processVideoFrame);
 }
 
-function updateStereoMode() {
-    const activeSphere = is180Mode ? sphere180 : sphere360;
-    
-    if (stereoMode === 'mono') {
-        activeSphere.setAttribute('stereo', 'eye: both; mode: mono');
-    } else if (stereoMode === 'sbs') {
-        activeSphere.setAttribute('stereo', 'eye: both; mode: side-by-side; split: horizontal');
-    } else if (stereoMode === 'tb') {
-        activeSphere.setAttribute('stereo', 'eye: both; mode: top-bottom; split: vertical');
-    }
-    
-    // Also update the inactive sphere so it's ready if switched
-    const inactiveSphere = is180Mode ? sphere360 : sphere180;
-    if (stereoMode === 'mono') {
-        inactiveSphere.setAttribute('stereo', 'eye: both; mode: mono');
-    } else if (stereoMode === 'sbs') {
-        inactiveSphere.setAttribute('stereo', 'eye: both; mode: side-by-side; split: horizontal');
-    } else if (stereoMode === 'tb') {
-        inactiveSphere.setAttribute('stereo', 'eye: both; mode: top-bottom; split: vertical');
-    }
-}
+video.onplay = () => {
+    processVideoFrame();
+};
 
 /* ---------- File Load ---------- */
 chooseBtn.onclick = () => fileInput.click();
