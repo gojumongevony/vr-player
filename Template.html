@@ -160,7 +160,7 @@ button {
     <!-- 180 degree sphere with stereo support - Left Eye -->
     <a-entity
         id="video-sphere-180-left"
-        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        geometry="primitive: sphere; radius: 500; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video; npot: true"
         rotation="0 -90 0"
         layers="type: left"
@@ -170,7 +170,7 @@ button {
     <!-- 180 degree sphere with stereo support - Right Eye -->
     <a-entity
         id="video-sphere-180-right"
-        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        geometry="primitive: sphere; radius: 500; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video; npot: true"
         rotation="0 -90 0"
         layers="type: right"
@@ -180,7 +180,7 @@ button {
     <!-- 360 degree sphere with stereo support - Left Eye -->
     <a-entity
         id="video-sphere-360-left"
-        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        geometry="primitive: sphere; radius: 500; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video"
         rotation="0 0 0"
         layers="type: left"
@@ -190,7 +190,7 @@ button {
     <!-- 360 degree sphere with stereo support - Right Eye -->
     <a-entity
         id="video-sphere-360-right"
-        geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
+        geometry="primitive: sphere; radius: 500; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video"
         rotation="0 0 0"
         layers="type: right"
@@ -466,9 +466,9 @@ function setupSphere(sphereEl, is180, eye) {
     
     let geometry;
     if (is180) {
-        // Create 180-degree hemisphere
+        // Create 180-degree hemisphere with larger radius for natural scale
         geometry = new THREE.SphereGeometry(
-            100,
+            500,            // radius - increased for more natural scale
             64,
             64,
             -Math.PI / 2,   // phiStart (-90 degrees)
@@ -477,8 +477,8 @@ function setupSphere(sphereEl, is180, eye) {
             Math.PI         // thetaLength (180 degrees vertical)
         );
     } else {
-        // Full 360 sphere
-        geometry = new THREE.SphereGeometry(100, 64, 64);
+        // Full 360 sphere with larger radius
+        geometry = new THREE.SphereGeometry(500, 64, 64);
     }
     
     // Apply UV mapping based on stereo mode and eye
