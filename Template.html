@@ -162,7 +162,7 @@ button {
         id="video-sphere-180-left"
         geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video; npot: true"
-        rotation="0 90 0"
+        rotation="0 -90 0"
         layers="type: left"
         visible="true">
     </a-entity>
@@ -172,7 +172,7 @@ button {
         id="video-sphere-180-right"
         geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video; npot: true"
-        rotation="0 90 0"
+        rotation="0 -90 0"
         layers="type: right"
         visible="true">
     </a-entity>
@@ -357,6 +357,11 @@ fileInput.onchange = e => {
         video.play().catch(err => {
             console.error('Playback error:', err);
         });
+        
+        // Apply stereo mode after video loads
+        if (scene.hasLoaded) {
+            applyStereoMode();
+        }
     };
 
     video.onerror = () => {
@@ -443,12 +448,17 @@ scene.addEventListener('loaded', () => {
         });
     });
     
+    // Apply initial stereo mode
+    applyStereoMode();
+});
+
+function applyStereoMode() {
     // Setup all spheres with proper geometry and UV mapping
     setupSphere(sphere180Left, true, 'left');
     setupSphere(sphere180Right, true, 'right');
     setupSphere(sphere360Left, false, 'left');
     setupSphere(sphere360Right, false, 'right');
-});
+}
 
 function setupSphere(sphereEl, is180, eye) {
     const mesh = sphereEl.getObject3D('mesh');
