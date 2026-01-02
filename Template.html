@@ -197,12 +197,12 @@ button {
         visible="false">
     </a-entity>
 
-    <a-entity id="camera" camera look-controls position="0 1.6 0" rotation="0 0 0">
+    <a-entity id="camera" camera="fov: 90" look-controls position="0 1.6 0" rotation="0 0 0">
         <a-cursor fuse="true" fuse-timeout="1500"></a-cursor>
     </a-entity>
 
     <!-- ---------- VR Controls ---------- -->
-    <a-entity id="vr-controls" visible="false" position="0 -0.5 -1.5" rotation="-30 0 0">
+    <a-entity id="vr-controls" visible="false" position="0 -0.5 -3" rotation="-30 0 0">
         <a-plane id="vr-play" class="clickable" width="0.6" height="0.3" position="-1.2 0.4 0" color="#333">
             <a-text value="Play" align="center" color="white" position="0 0 0.01"></a-text>
         </a-plane>
@@ -246,7 +246,7 @@ const vrPlayText = document.querySelector('#vr-play a-text');
 const vrMuteText = document.querySelector('#vr-mute a-text');
 const vrTimeText = document.getElementById('vr-time');
 
-let fov = 80;
+let fov = 90;
 let is180Mode = true;
 let stereoMode = 'mono'; // 'mono', 'sbs' (side-by-side), 'tb' (top-bottom)
 
