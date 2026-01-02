@@ -162,8 +162,8 @@ button {
         id="video-sphere-180"
         geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video; npot: true"
-        rotation="0 0 0"
-        stereo="eye: both; mode: mono"
+        rotation="0 180 0"
+        stereo="eye: both; mode: side-by-side; split: horizontal"
         visible="true">
     </a-entity>
 
@@ -173,7 +173,7 @@ button {
         geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64"
         material="shader: flat; side: back; src: #vr-video"
         rotation="0 0 0"
-        stereo="eye: both; mode: mono"
+        stereo="eye: both; mode: side-by-side; split: horizontal"
         visible="false">
     </a-entity>
 
